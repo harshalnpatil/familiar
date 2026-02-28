@@ -102,9 +102,9 @@ test('stills:openFolder opens the familiar root folder under context', async () 
     assert.deepEqual(toastCalls, [
       {
         title: 'Finder opened',
-        body: 'Timestamps shown in Familiar files are in UTC.',
+        body: 'Timestamps in file/folder names are UTC.',
         type: 'info',
-        duration: 5000
+        duration: 7000
       }
     ])
   })

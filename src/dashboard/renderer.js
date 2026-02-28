@@ -292,7 +292,9 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
   const sectionSubtitle = document.getElementById('section-subtitle')
   const sectionNavButtons = selectAll('[data-section-target]')
   const wizardNavButton = sectionNavButtons.find((button) => button.dataset.sectionTarget === 'wizard') || null
+  const nestNavButton = sectionNavButtons.find((button) => button.dataset.sectionTarget === 'nest') || null
   const sectionPanes = selectAll('[data-section-pane]')
+  const nestPane = sectionPanes.find((pane) => pane.dataset.sectionPane === 'nest') || null
 
   const apis = {
     wizardApi: null,
@@ -345,10 +347,15 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
     'install-skill': {
       title: microcopy.dashboard.sections.installSkill.title,
       subtitle: microcopy.dashboard.sections.installSkill.subtitle
+    },
+    nest: {
+      title: microcopy.dashboard.sections.nest.title,
+      subtitle: microcopy.dashboard.sections.nest.subtitle
     }
   }
 
   let isWizardCompleted = false
+  let isNestEnabled = false
 
   function updateOnboardingLayout() {
     if (settingsSidebar) {
@@ -366,6 +373,23 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
     updateOnboardingLayout()
   }
 
+  function setNestAvailability(enabled) {
+    isNestEnabled = enabled === true
+    if (nestNavButton) {
+      nestNavButton.classList.toggle('hidden', !isNestEnabled)
+      nestNavButton.setAttribute('aria-hidden', String(!isNestEnabled))
+      if (!isNestEnabled) {
+        nestNavButton.dataset.active = 'false'
+        nestNavButton.setAttribute('aria-selected', 'false')
+        nestNavButton.tabIndex = -1
+      }
+    }
+    if (nestPane && !isNestEnabled) {
+      nestPane.classList.add('hidden')
+      nestPane.setAttribute('aria-hidden', 'true')
+    }
+  }
+
   setWizardCompletionState(false)
 
   function setActiveSection(nextSection) {
@@ -376,6 +400,11 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
 
     if (isWizardCompleted && nextSection === 'wizard') {
       console.log('Ignoring wizard section after completion')
+      return
+    }
+
+    if (nextSection === 'nest' && !isNestEnabled) {
+      console.log('Ignoring nest section because it is unavailable in this build')
       return
     }
 
@@ -693,6 +722,7 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
   async function initialize() {
     const settingsResult = await apis.settingsApi.loadSettings()
     setWizardCompletionState(settingsResult?.wizardCompleted === true)
+    setNestAvailability(settingsResult?.isDevBuild === true)
     callIfAvailable(apis.recordingApi, 'updateStillsUI')
     const rawHarnessValue = settingsResult?.skillInstaller?.harness
     const legacyHarnesses = settingsResult?.skillInstaller?.harnesses

@@ -40,6 +40,7 @@ const microcopy = {
       navStorage: 'Storage',
       navCapturing: 'Capturing',
       navInstallSkill: 'Install Skill',
+      navNest: 'Nest',
       updatesCheckForUpdates: 'Check for Updates',
       recordingAriaLabelCapturingSettings: 'Capturing settings',
       recordingPermissionsLabel: 'Permissions',
@@ -91,6 +92,10 @@ const microcopy = {
       storageRetention2d: '2 days',
       storageRetention7d: '7 days',
       installSkillAriaLabelInstallSkillSettings: 'Install skill settings',
+      nestAriaLabelDeveloperPreview: 'Nest developer preview',
+      nestCardTitle: 'Nest',
+      nestCardDescription: 'Developer preview section for Nest client onboarding, identity, and relay wiring.',
+      nestCardDevOnlyNote: 'This tab is visible only in dev builds.',
       wizardAriaLabelSetupWizard: 'Setup wizard',
       wizardHeaderTitle: 'Setup Wizard',
       wizardHeaderSubtitle: 'Guided setup in four steps.',
@@ -190,6 +195,10 @@ const microcopy = {
       installSkill: {
         title: 'Install Skill',
         subtitle: 'Install Familiar into your coding assistant skills folder.'
+      },
+      nest: {
+        title: 'Nest',
+        subtitle: 'Developer preview controls for the Nest.'
       }
     },
     stills: {
