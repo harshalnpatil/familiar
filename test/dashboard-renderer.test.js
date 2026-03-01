@@ -284,12 +284,10 @@ const createElements = () => {
     'wizard-skill-error': new TestElement(),
     'wizard-skill-path': new TestElement(),
     'wizard-skill-cursor-restart-note': new TestElement(),
-    'wizard-skill-install': new TestElement(),
     'settings-skill-status': new TestElement(),
     'settings-skill-error': new TestElement(),
     'settings-skill-path': new TestElement(),
     'settings-skill-cursor-restart-note': new TestElement(),
-    'settings-skill-install': new TestElement(),
     'wizard-skill-harness-claude': new TestElement(),
     'wizard-skill-harness-codex': new TestElement(),
     'wizard-skill-harness-cursor': new TestElement(),
@@ -390,8 +388,6 @@ const createElements = () => {
   elements['recording-recording-toggle-section'].dataset.permissionToggleVisibility = 'always'
   elements['permissions-recording-toggle-section'].dataset.role =
     'permission-recording-toggle-section'
-  elements['wizard-skill-install'].dataset.action = 'skill-install'
-  elements['settings-skill-install'].dataset.action = 'skill-install'
   elements['wizard-skill-status'].dataset.skillInstallStatus = 'wizard'
   elements['settings-skill-status'].dataset.skillInstallStatus = 'settings'
   elements['wizard-skill-error'].dataset.skillInstallError = 'wizard'

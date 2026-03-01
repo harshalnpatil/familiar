@@ -209,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
   const wizardStepIndicators = selectAll('[data-wizard-step-indicator]')
   const wizardStepConnectors = selectAll('[data-wizard-step-connector]')
   const skillHarnessInputs = selectAll('[data-skill-harness]')
-  const skillInstallButtons = selectAll('[data-action="skill-install"]')
   const skillInstallStatuses = selectAll('[data-skill-install-status]')
   const skillInstallErrors = selectAll('[data-skill-install-error]')
   const skillInstallPaths = selectAll('[data-skill-install-path]')
@@ -567,7 +566,6 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
     window,
     elements: {
       skillHarnessInputs,
-      skillInstallButtons,
       skillInstallStatuses,
       skillInstallErrors,
       skillInstallPaths,

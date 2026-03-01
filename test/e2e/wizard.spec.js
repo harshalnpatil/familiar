@@ -54,7 +54,6 @@ const completeWizardPermissionsStep = async (window, nextButton) => {
 }
 
 const installWizardSkill = async (window) => {
-  const skillInstallButton = window.locator('#wizard-skill-install')
   const skillStatus = window.locator('#wizard-skill-status')
   const wizardStepThree = window.locator('[data-wizard-step="3"]')
   const codexHarnessOption = wizardStepThree.locator('.skill-picker-option', { hasText: 'Codex' })
@@ -64,14 +63,11 @@ const installWizardSkill = async (window) => {
   if (!(await codexHarness.isChecked())) {
     await codexHarnessOption.click()
   }
-  await expect(skillInstallButton).toBeEnabled()
-  await skillInstallButton.click()
   await expect(skillStatus).toContainText('Installed')
 }
 
 const openCloudCoWorkGuide = async (window) => {
   const wizardStepThree = window.locator('[data-wizard-step="3"]')
-  const skillInstallButton = window.locator('#wizard-skill-install')
   const skillStatus = window.locator('#wizard-skill-status')
   const cloudCoWorkOption = wizardStepThree.locator('.skill-picker-option', { hasText: 'Claude Cowork' })
   const cloudCoWorkHarness = wizardStepThree.locator('input[name="wizard-skill-harness"][value="cloud-cowork"]')
@@ -82,9 +78,6 @@ const openCloudCoWorkGuide = async (window) => {
   if (!(await cloudCoWorkHarness.isChecked())) {
     await cloudCoWorkOption.click()
   }
-
-  await expect(skillInstallButton).toBeEnabled()
-  await skillInstallButton.click()
 
   await expect(guideContainer).toBeVisible()
   await expect(guideContainer).toContainText('Add marketplace from GitHub')
@@ -98,7 +91,7 @@ const openCloudCoWorkGuide = async (window) => {
   await expect(guideContainer).toBeHidden()
 }
 
-const expectInstallRequiredToAdvance = async (window, nextButton) => {
+const expectAutoInstallAllowsAdvance = async (window, nextButton) => {
   const wizardStepThree = window.locator('[data-wizard-step="3"]')
   const codexHarnessOption = wizardStepThree.locator('.skill-picker-option', { hasText: 'Codex' })
   const codexHarness = wizardStepThree.locator('input[name="wizard-skill-harness"][value="codex"]')
@@ -108,8 +101,8 @@ const expectInstallRequiredToAdvance = async (window, nextButton) => {
     await codexHarnessOption.click()
   }
 
-  await expect(nextButton).toBeDisabled()
-  await expect(window.locator('#wizard-skill-status')).not.toContainText('Installed')
+  await expect(window.locator('#wizard-skill-status')).toContainText('Installed')
+  await expect(nextButton).toBeEnabled()
 }
 
 const goToFinalWizardStep = async (window, nextButton) => {
@@ -200,7 +193,7 @@ test('wizard permission step requires enabling recording', async () => {
   }
 })
 
-test('wizard install step requires skill installation before continuing', async () => {
+test('wizard install step auto-installs selected harness and allows continuing', async () => {
   const appRoot = path.join(__dirname, '../..')
   const contextPath = path.join(appRoot, 'test', 'fixtures', 'context')
   const expectedDisplayPath = path.join(path.resolve(contextPath), 'familiar')
@@ -223,10 +216,8 @@ test('wizard install step requires skill installation before continuing', async 
     await completeWizardPermissionsStep(window, nextButton)
     await expect(window.locator('[data-wizard-step="3"]')).toBeVisible()
 
-    await expectInstallRequiredToAdvance(window, nextButton)
+    await expectAutoInstallAllowsAdvance(window, nextButton)
     await expect(window.locator('[data-wizard-step="3"]')).toBeVisible()
-
-    await installWizardSkill(window)
     await expect(nextButton).toBeEnabled()
     await nextButton.click()
     await expect(window.locator('[data-wizard-step="4"]')).toBeVisible()
