@@ -76,46 +76,6 @@
           aria-label=""></span>
       </div>
 
-      <!-- Status (Capture Toggle + Live State) -->
-      <div class="px-3 mb-4">
-        <div class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div class="flex items-center justify-between gap-2 mb-1">
-            <div class="flex items-center gap-2">
-              <span id="sidebar-recording-dot" class="w-2 h-2 rounded-full bg-zinc-400"></span>
-              <span id="sidebar-recording-status"
-                class="text-xs font-medium text-zinc-700 dark:text-zinc-200" data-copy-key="recordingIndicator.off"></span>
-            </div>
-            <label for="always-record-when-active" class="relative inline-flex items-center cursor-pointer"
-              data-copy-aria-label-key="dashboard.html.sidebarRecordingAriaLabelToggleCapturing" aria-label="">
-              <input id="always-record-when-active" data-setting="always-record-when-active" type="checkbox"
-                class="sr-only peer">
-              <div id="sidebar-recording-toggle-track"
-                class="w-10 h-5 bg-zinc-200 dark:bg-zinc-800 rounded-full peer peer-checked:bg-emerald-500 transition-colors">
-              </div>
-              <div
-                class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5">
-              </div>
-            </label>
-          </div>
-          <button id="sidebar-recording-action" type="button" data-copy-aria-label-key="dashboard.html.sidebarRecordingAriaLabelPauseOrResumeCapturing"
-            class="w-full flex items-center justify-center gap-2 h-7 rounded-md bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="">
-            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8"
-              aria-hidden="true">
-              <path d="M12 8v4l2 2" />
-              <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </svg>
-            <span data-copy-key="dashboard.html.sidebarRecordingActionPauseFor10Min"></span>
-          </button>
-          <p id="sidebar-recording-permission" class="text-xs text-red-600 dark:text-red-400 hidden pt-2" role="alert"
-            aria-live="polite"></p>
-          <p id="always-record-when-active-error" data-setting-error="always-record-when-active-error"
-            class="text-xs text-red-600 dark:text-red-400 hidden pt-1" role="alert" aria-live="polite"></p>
-          <span id="always-record-when-active-status" data-setting-status="always-record-when-active-status"
-            class="sr-only hidden" aria-live="polite"></span>
-        </div>
-      </div>
-
       <nav class="flex-1 px-2 space-y-1" role="tablist" data-copy-aria-label-key="dashboard.html.sidebarAriaLabelSettingsSections" aria-label="">
         <button class="sidebar-item" data-section-target="wizard" data-active="false" role="tab"
           aria-controls="section-wizard" aria-selected="false" type="button">
@@ -188,12 +148,62 @@
           <h2 id="section-title" class="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100" data-copy-key="dashboard.sections.storage.title"></h2>
           <p id="section-subtitle" class="text-xs text-zinc-500 dark:text-zinc-400" data-copy-key="dashboard.sections.storage.subtitle"></p>
         </div>
+        <div id="recording-header-status"
+          class="hidden items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+          <span id="recording-status-dot" class="w-2 h-2 rounded-full bg-zinc-400"></span>
+          <span id="recording-status" data-copy-key="recordingIndicator.off"></span>
+        </div>
       </div>
 
       <div id="settings-content" class="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-slim">
         <section id="section-recording" data-section-pane="recording" role="tabpanel" data-copy-aria-label-key="dashboard.html.recordingAriaLabelCapturingSettings" aria-label=""
           class="hidden flex flex-col min-h-full">
           <div class="space-y-6">
+            <section id="recording-recording-toggle-section" data-role="permission-recording-toggle-section"
+              data-permission-toggle-visibility="always" class="space-y-2">
+              <label for="recording-always-record-when-active" class="relative block w-full cursor-pointer group">
+                  <input id="recording-always-record-when-active" data-setting="always-record-when-active"
+                    type="checkbox" class="sr-only peer">
+                  <div
+                    class="wizard-capture-toggle-card rounded-xl border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900 p-4 transition-all duration-300
+                    hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800
+                    peer-checked:border-indigo-500 peer-checked:bg-indigo-50/40 dark:peer-checked:border-indigo-500/50 dark:peer-checked:bg-indigo-500/10 peer-checked:shadow-sm">
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="wizard-capture-toggle-icon w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300
+                          bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 text-zinc-400
+                          group-hover:text-zinc-600 dark:group-hover:text-zinc-300
+                          peer-checked:bg-indigo-100 dark:peer-checked:bg-indigo-900/50 peer-checked:border-transparent peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
+                          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"
+                            aria-hidden="true">
+                            <rect x="3" y="7" width="13" height="10" rx="2"></rect>
+                            <path d="M16 10l5-3v10l-5-3z"></path>
+                          </svg>
+                        </div>
+                        <div class="flex flex-col gap-0.5 min-w-0">
+                          <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100" data-copy-key="dashboard.html.recordingCaptureWhileActive"></span>
+                          <span
+                            class="wizard-capture-toggle-subtitle-off text-xs text-zinc-500 dark:text-zinc-400 block peer-checked:hidden transition-opacity" data-copy-key="dashboard.html.recordingActionRequiredToProceed"></span>
+                          <span
+                            class="wizard-capture-toggle-subtitle-on text-xs text-indigo-600 dark:text-indigo-400 hidden peer-checked:block transition-opacity" data-copy-key="dashboard.html.recordingCapturingIsEnabled"></span>
+                        </div>
+                      </div>
+                      <div
+                        class="wizard-capture-toggle-switch relative w-12 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 transition-colors duration-300 ease-in-out peer-checked:bg-indigo-600 shadow-inner group-hover:bg-zinc-400 dark:group-hover:bg-zinc-600 peer-checked:group-hover:bg-indigo-700">
+                        <div
+                          class="wizard-capture-toggle-knob absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-300 peer-checked:translate-x-6">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              <p id="recording-always-record-when-active-error" data-setting-error="always-record-when-active-error"
+                class="text-xs text-red-600 dark:text-red-400 hidden" role="alert" aria-live="polite"></p>
+              <span id="recording-always-record-when-active-status"
+                data-setting-status="always-record-when-active-status"
+                class="text-xs text-emerald-600 dark:text-emerald-400 hidden" aria-live="polite"></span>
+            </section>
+
             <section class="space-y-2">
               <div class="flex items-center justify-between">
                 <label class="section-label" data-copy-key="dashboard.html.recordingPermissionsLabel"></label>
@@ -208,50 +218,6 @@
                   <p id="recording-open-screen-recording-settings-note" data-open-screen-recording-settings-note
                     class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 hidden" data-copy-key="dashboard.html.recordingAfterEnablingRestartFamiliar"></p>
                 </div>
-                <section id="recording-recording-toggle-section" data-role="permission-recording-toggle-section"
-                  data-permission-toggle-visibility="always" class="space-y-2">
-                  <label for="recording-always-record-when-active" class="relative block w-full cursor-pointer group">
-                      <input id="recording-always-record-when-active" data-setting="always-record-when-active"
-                        type="checkbox" class="sr-only peer">
-                      <div
-                        class="wizard-capture-toggle-card rounded-xl border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900 p-4 transition-all duration-300
-                        hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800
-                        peer-checked:border-indigo-500 peer-checked:bg-indigo-50/40 dark:peer-checked:border-indigo-500/50 dark:peer-checked:bg-indigo-500/10 peer-checked:shadow-sm">
-                        <div class="flex items-center justify-between gap-3">
-                          <div class="flex items-center gap-3 min-w-0">
-                            <div class="wizard-capture-toggle-icon w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300
-                              bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 text-zinc-400
-                              group-hover:text-zinc-600 dark:group-hover:text-zinc-300
-                              peer-checked:bg-indigo-100 dark:peer-checked:bg-indigo-900/50 peer-checked:border-transparent peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
-                              <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"
-                                aria-hidden="true">
-                                <rect x="3" y="7" width="13" height="10" rx="2"></rect>
-                                <path d="M16 10l5-3v10l-5-3z"></path>
-                              </svg>
-                            </div>
-                            <div class="flex flex-col gap-0.5 min-w-0">
-                              <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100" data-copy-key="dashboard.html.recordingCaptureWhileActive"></span>
-                              <span
-                                class="wizard-capture-toggle-subtitle-off text-xs text-zinc-500 dark:text-zinc-400 block peer-checked:hidden transition-opacity" data-copy-key="dashboard.html.recordingActionRequiredToProceed"></span>
-                              <span
-                                class="wizard-capture-toggle-subtitle-on text-xs text-indigo-600 dark:text-indigo-400 hidden peer-checked:block transition-opacity" data-copy-key="dashboard.html.recordingCapturingIsEnabled"></span>
-                            </div>
-                          </div>
-                          <div
-                            class="wizard-capture-toggle-switch relative w-12 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 transition-colors duration-300 ease-in-out peer-checked:bg-indigo-600 shadow-inner group-hover:bg-zinc-400 dark:group-hover:bg-zinc-600 peer-checked:group-hover:bg-indigo-700">
-                            <div
-                              class="wizard-capture-toggle-knob absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-300 peer-checked:translate-x-6">
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </label>
-                  <p id="recording-always-record-when-active-error" data-setting-error="always-record-when-active-error"
-                    class="text-xs text-red-600 dark:text-red-400 hidden" role="alert" aria-live="polite"></p>
-                  <span id="recording-always-record-when-active-status"
-                    data-setting-status="always-record-when-active-status"
-                    class="text-xs text-emerald-600 dark:text-emerald-400 hidden" aria-live="polite"></span>
-                </section>
               </div>
             </section>
 

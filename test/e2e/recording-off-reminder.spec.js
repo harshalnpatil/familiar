@@ -62,15 +62,18 @@ const setContextFolder = async (window) => {
 }
 
 const enableRecordingToggle = async (window) => {
-  await window.locator('label[for="always-record-when-active"]').click({ force: true })
-  await expect(window.locator('#always-record-when-active')).toBeChecked()
-  await expect(window.locator('#always-record-when-active-status')).toHaveText('Saved.')
+  await window.getByRole('tab', { name: 'Capturing' }).click()
+  await expect(window.locator('#recording-always-record-when-active')).toBeVisible()
+  await window.locator('label[for="recording-always-record-when-active"]').click({ force: true })
+  await expect(window.locator('#recording-always-record-when-active')).toBeChecked()
+  await expect(window.locator('#recording-always-record-when-active-status')).toHaveText('Saved.')
 }
 
 const disableRecordingToggle = async (window) => {
-  const toggle = window.locator('#always-record-when-active')
+  await window.getByRole('tab', { name: 'Capturing' }).click()
+  const toggle = window.locator('#recording-always-record-when-active')
   await expect(toggle).toBeChecked()
-  await window.locator('label[for="always-record-when-active"]').click({ force: true })
+  await window.locator('label[for="recording-always-record-when-active"]').click({ force: true })
   await expect(toggle).not.toBeChecked()
 }
 

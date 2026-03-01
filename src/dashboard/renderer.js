@@ -179,8 +179,7 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
 
     const copyEntries = [
       ['section-title', microcopy.dashboard.sections.storage.title],
-      ['section-subtitle', microcopy.dashboard.sections.storage.subtitle],
-      ['sidebar-recording-action', microcopy.dashboard.stills.pauseFor10Min]
+      ['section-subtitle', microcopy.dashboard.sections.storage.subtitle]
     ]
     for (const [id, value] of copyEntries) {
       const element = document.getElementById(id)
@@ -264,11 +263,9 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
   const alwaysRecordWhenActiveInputs = selectAll('[data-setting="always-record-when-active"]')
   const alwaysRecordWhenActiveErrors = selectAll('[data-setting-error="always-record-when-active-error"]')
   const alwaysRecordWhenActiveStatuses = selectAll('[data-setting-status="always-record-when-active-status"]')
-  const sidebarRecordingDot = document.getElementById('sidebar-recording-dot')
-  const sidebarRecordingStatus = document.getElementById('sidebar-recording-status')
-  const sidebarRecordingToggleTrack = document.getElementById('sidebar-recording-toggle-track')
-  const sidebarRecordingActionButton = document.getElementById('sidebar-recording-action')
-  const sidebarRecordingPermission = document.getElementById('sidebar-recording-permission')
+  const recordingHeaderStatus = document.getElementById('recording-header-status')
+  const recordingStatusDot = document.getElementById('recording-status-dot')
+  const recordingStatus = document.getElementById('recording-status')
   const recordingDetails = document.getElementById('recording-details')
   const recordingPath = document.getElementById('recording-path')
   const recordingOpenFolderButton = document.getElementById('recording-open-folder')
@@ -443,6 +440,11 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
 
     if (settingsHeader) {
       settingsHeader.classList.toggle('hidden', isWizard)
+    }
+    if (recordingHeaderStatus) {
+      const showRecordingHeaderStatus = !isWizard && nextSection === 'recording'
+      recordingHeaderStatus.classList.toggle('hidden', !showRecordingHeaderStatus)
+      recordingHeaderStatus.classList.toggle('flex', showRecordingHeaderStatus)
     }
     if (settingsContent) {
       settingsContent.classList.toggle('hidden', isWizard)
@@ -627,11 +629,8 @@ document.addEventListener('DOMContentLoaded', function onDOMContentLoaded() {
   apis.recordingApi = runBootstrapStills({
     window,
     elements: {
-      sidebarRecordingDot,
-      sidebarRecordingStatus,
-      sidebarRecordingToggleTrack,
-      sidebarRecordingActionButton,
-      sidebarRecordingPermission,
+      recordingStatusDot,
+      recordingStatus,
       recordingDetails,
       recordingPath,
       recordingOpenFolderButton,

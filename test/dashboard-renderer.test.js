@@ -249,10 +249,6 @@ const createElements = () => {
   const elements = {
     'advanced-toggle-btn': new TestElement(),
     'advanced-options': new TestElement(),
-    'sidebar-recording-dot': new TestElement(),
-    'sidebar-recording-status': new TestElement(),
-    'sidebar-recording-action': new TestElement(),
-    'sidebar-recording-permission': new TestElement(),
     'context-folder-path': new TestElement(),
     'context-folder-choose': new TestElement(),
     'context-folder-error': new TestElement(),
@@ -263,9 +259,11 @@ const createElements = () => {
     'stills-markdown-extractor': new TestElement(),
     'stills-markdown-extractor-error': new TestElement(),
     'stills-markdown-extractor-status': new TestElement(),
-    'always-record-when-active': new TestElement(),
-    'always-record-when-active-error': new TestElement(),
-    'always-record-when-active-status': new TestElement(),
+    'recording-status-dot': new TestElement(),
+    'recording-status': new TestElement(),
+    'recording-always-record-when-active': new TestElement(),
+    'recording-always-record-when-active-error': new TestElement(),
+    'recording-always-record-when-active-status': new TestElement(),
     'wizard-always-record-when-active': new TestElement(),
     'wizard-always-record-when-active-error': new TestElement(),
     'wizard-always-record-when-active-status': new TestElement(),
@@ -364,10 +362,10 @@ const createElements = () => {
     'stills-markdown-extractor-error'
   elements['stills-markdown-extractor-status'].dataset.settingStatus =
     'stills-markdown-extractor-status'
-  elements['always-record-when-active'].dataset.setting = 'always-record-when-active'
-  elements['always-record-when-active-error'].dataset.settingError =
+  elements['recording-always-record-when-active'].dataset.setting = 'always-record-when-active'
+  elements['recording-always-record-when-active-error'].dataset.settingError =
     'always-record-when-active-error'
-  elements['always-record-when-active-status'].dataset.settingStatus =
+  elements['recording-always-record-when-active-status'].dataset.settingStatus =
     'always-record-when-active-status'
   elements['wizard-always-record-when-active'].dataset.setting = 'always-record-when-active'
   elements['wizard-always-record-when-active-error'].dataset.settingError =
@@ -739,15 +737,18 @@ test('always record toggle saves on change', async () => {
     document.trigger('DOMContentLoaded')
     await flushPromises()
 
-    elements['always-record-when-active'].checked = true
-    await elements['always-record-when-active']._listeners.change({
-      target: elements['always-record-when-active']
+    elements['recording-always-record-when-active'].checked = true
+    await elements['recording-always-record-when-active']._listeners.change({
+      target: elements['recording-always-record-when-active']
     })
     await flushPromises()
 
     assert.equal(saveCalls.length, 1)
     assert.deepEqual(saveCalls[0], { alwaysRecordWhenActive: true })
-    assert.equal(elements['always-record-when-active-status'].textContent, microcopy.dashboard.settings.statusSaved)
+    assert.equal(
+      elements['recording-always-record-when-active-status'].textContent,
+      microcopy.dashboard.settings.statusSaved
+    )
     assert.equal(elements['wizard-always-record-when-active-status'].textContent, microcopy.dashboard.settings.statusSaved)
     assert.equal(elements['permissions-always-record-when-active-status'].textContent, microcopy.dashboard.settings.statusSaved)
     assert.equal(elements['wizard-always-record-when-active'].checked, true)
@@ -1334,8 +1335,47 @@ test('wizard step 2 does not auto-check permissions when recording is already en
   }
 })
 
-test('stills action button starts capture when inactive', async () => {
-  const startCalls = []
+test('stills status indicator in capturing tab shows capturing state', async () => {
+  const familiar = createFamiliar({
+    getSettings: async () => ({
+      contextFolderPath: '/tmp/context',
+      llmProviderName: 'gemini',
+      llmProviderApiKey: '',
+      alwaysRecordWhenActive: true,
+      wizardCompleted: true
+    }),
+    getScreenStillsStatus: async () => ({
+      ok: true,
+      state: 'recording',
+      isRecording: true,
+      manualPaused: false
+    })
+  })
+
+  const elements = createElements()
+  const document = new TestDocument(elements)
+  const priorDocument = global.document
+  const priorWindow = global.window
+  global.document = document
+  global.window = { familiar }
+
+  try {
+    loadRenderer()
+    document.trigger('DOMContentLoaded')
+    await flushPromises()
+
+    await elements['recording-nav'].click()
+    await flushPromises()
+
+    assert.equal(elements['recording-status'].textContent, microcopy.recordingIndicator.capturing)
+    assert.equal(elements['recording-status-dot'].classList.contains('bg-emerald-500'), true)
+  } finally {
+    global.document = priorDocument
+    global.window = priorWindow
+  }
+})
+
+test('stills status indicator in capturing tab shows paused state', async () => {
   const familiar = createFamiliar({
     getSettings: async () => ({
       contextFolderPath: '/tmp/context',
@@ -1348,12 +1388,8 @@ test('stills action button starts capture when inactive', async () => {
       ok: true,
       state: 'armed',
       isRecording: false,
-      manualPaused: false
-    }),
-    startScreenStills: async () => {
-      startCalls.push(true)
-      return { ok: true, state: 'recording', isRecording: true, manualPaused: false }
-    }
+      manualPaused: true
+    })
   })
 
   const elements = createElements()
@@ -1371,79 +1407,15 @@ test('stills action button starts capture when inactive', async () => {
     await elements['recording-nav'].click()
     await flushPromises()
 
-    await elements['sidebar-recording-action'].click()
-    await flushPromises()
-
-    assert.equal(startCalls.length, 1)
+    assert.equal(elements['recording-status'].textContent, microcopy.recordingIndicator.paused)
+    assert.equal(elements['recording-status-dot'].classList.contains('bg-amber-500'), true)
   } finally {
     global.document = priorDocument
     global.window = priorWindow
   }
 })
 
-test('stills action button pauses and resumes when paused', async () => {
-  const pauseCalls = []
-  const startCalls = []
-  let status = { ok: true, state: 'recording', isRecording: true, manualPaused: false }
-  const familiar = createFamiliar({
-    getSettings: async () => ({
-      contextFolderPath: '/tmp/context',
-      llmProviderName: 'gemini',
-      llmProviderApiKey: '',
-      alwaysRecordWhenActive: true,
-      wizardCompleted: true
-    }),
-    getScreenStillsStatus: async () => status,
-    pauseScreenStills: async () => {
-      pauseCalls.push(true)
-      status = { ok: true, state: 'armed', isRecording: false, manualPaused: true }
-      return status
-    },
-    startScreenStills: async () => {
-      startCalls.push(true)
-      status = { ok: true, state: 'recording', isRecording: true, manualPaused: false }
-      return status
-    }
-  })
-
-  const elements = createElements()
-  const document = new TestDocument(elements)
-  const priorDocument = global.document
-  const priorWindow = global.window
-  global.document = document
-  global.window = { familiar }
-
-  try {
-    loadRenderer()
-    document.trigger('DOMContentLoaded')
-    await flushPromises()
-
-    await elements['recording-nav'].click()
-    await flushPromises()
-
-    assert.equal(elements['sidebar-recording-status'].textContent, microcopy.dashboard.stills.capturing)
-    assert.equal(elements['sidebar-recording-action'].textContent, microcopy.dashboard.stills.pauseFor10Min)
-
-    await elements['sidebar-recording-action'].click()
-    await flushPromises()
-
-    assert.equal(pauseCalls.length, 1)
-    assert.equal(elements['sidebar-recording-status'].textContent, microcopy.dashboard.stills.paused)
-    assert.equal(elements['sidebar-recording-action'].textContent, 'Resume')
-
-    await elements['sidebar-recording-action'].click()
-    await flushPromises()
-
-    assert.equal(startCalls.length, 1)
-    assert.equal(elements['sidebar-recording-status'].textContent, microcopy.dashboard.stills.capturing)
-    assert.equal(elements['sidebar-recording-action'].textContent, microcopy.dashboard.stills.pauseFor10Min)
-  } finally {
-    global.document = priorDocument
-    global.window = priorWindow
-  }
-})
-
-test('stills sidebar shows permission needed and red status dot', async () => {
+test('stills status indicator in capturing tab shows permission needed and red dot', async () => {
   const familiar = createFamiliar({
     getSettings: async () => ({
       contextFolderPath: '/tmp/context',
@@ -1478,9 +1450,8 @@ test('stills sidebar shows permission needed and red status dot', async () => {
     await elements['recording-nav'].click()
     await flushPromises()
 
-    assert.equal(elements['sidebar-recording-status'].textContent, microcopy.recordingIndicator.permissionNeeded)
-    assert.equal(elements['sidebar-recording-dot'].classList.contains('bg-red-500'), true)
-    assert.equal(elements['sidebar-recording-permission'].classList.contains('hidden'), true)
+    assert.equal(elements['recording-status'].textContent, microcopy.recordingIndicator.permissionNeeded)
+    assert.equal(elements['recording-status-dot'].classList.contains('bg-red-500'), true)
   } finally {
     global.document = priorDocument
     global.window = priorWindow
