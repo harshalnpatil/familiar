@@ -245,6 +245,9 @@ Or less about meta-use cases, and just pure help:
 
 ### Productivity
 
+> Look back at everything I did today and bucket my activity into categories. Then help me understand where I was productive and not productive based on context switching. - Konrad Murch
+
+
 > I've been bouncing between message threads and docs for two hours and my brain is soup. What are the open threads I still need to respond to?
 
 > Given everything on my plate right now, what would you cut and in what order?
