@@ -60,7 +60,7 @@ test('storage change button sets the context folder path', async () => {
     await window.getByRole('tab', { name: 'Storage' }).click()
 
     const confirmDialog = confirmMoveContextFolder(window)
-    await window.locator('#recording-open-folder').click()
+    await window.locator('#recording-move-folder').click()
     await confirmDialog
     await expect(window.locator('#context-folder-path')).toHaveValue(expectedStorageDisplayPath)
     await expect(window.locator('#context-folder-status')).toHaveText('Saved.')
@@ -252,6 +252,92 @@ test('settings window toggles app activation policy between foreground and backg
     await expect
       .poll(async () => electronApp.evaluate(({ app }) => app.dock.isVisible()))
       .toBe(true)
+  } finally {
+    await electronApp.close()
+  }
+})
+
+test('repeated non-capture settings saves keep screen-stills state stable', async () => {
+  const appRoot = path.join(__dirname, '../..')
+  const contextPath = path.join(appRoot, 'test', 'fixtures', 'context')
+  const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-e2e-'))
+  const settingsPath = path.join(settingsDir, 'settings.json')
+  fs.mkdirSync(path.join(contextPath, 'familiar'), { recursive: true })
+  fs.writeFileSync(
+    settingsPath,
+    JSON.stringify(
+      {
+        wizardCompleted: true,
+        contextFolderPath: contextPath,
+        alwaysRecordWhenActive: true
+      },
+      null,
+      2
+    )
+  )
+
+  const launchArgs = ['.']
+  if (process.platform === 'linux') {
+    launchArgs.push('--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage')
+  }
+
+  const electronApp = await electron.launch({
+    args: launchArgs,
+    cwd: appRoot,
+    env: {
+      ...process.env,
+      FAMILIAR_E2E: '1',
+      FAMILIAR_E2E_CONTEXT_PATH: contextPath,
+      FAMILIAR_E2E_SCREEN_RECORDING_PERMISSION: 'granted',
+      FAMILIAR_LLM_MOCK: '1',
+      FAMILIAR_LLM_MOCK_TEXT: 'gibberish',
+      FAMILIAR_SETTINGS_DIR: settingsDir
+    }
+  })
+
+  try {
+    const window = await electronApp.firstWindow()
+    await window.waitForLoadState('domcontentloaded')
+
+    await window.evaluate(() => {
+      window.__screenStillsTransitionHistory = []
+      window.familiar.onScreenStillsStateChanged((payload) => {
+        window.__screenStillsTransitionHistory.push({
+          state: payload.state,
+          manualPaused: payload.manualPaused,
+          enabled: payload.enabled
+        })
+      })
+    })
+
+    const startResult = await window.evaluate(() => window.familiar.startScreenStills())
+    expect(startResult.ok).toBe(true)
+
+    await expect
+      .poll(async () => {
+        const status = await window.evaluate(() => window.familiar.getScreenStillsStatus())
+        return status.state
+      })
+      .not.toBe('disabled')
+
+    const baselineState = await window.evaluate(() => window.familiar.getScreenStillsStatus())
+    const baselineTransitions = await window.evaluate(() => window.__screenStillsTransitionHistory.length)
+
+    for (let index = 0; index < 10; index += 1) {
+      const nextRetentionValue = index % 2 === 0 ? 2 : 7
+      const saveResult = await window.evaluate((nextValue) => {
+        return window.familiar.saveSettings({ storageAutoCleanupRetentionDays: nextValue })
+      }, nextRetentionValue)
+      expect(saveResult).toEqual({ ok: true })
+    }
+
+    await window.waitForTimeout(300)
+
+    const finalState = await window.evaluate(() => window.familiar.getScreenStillsStatus())
+    const finalTransitions = await window.evaluate(() => window.__screenStillsTransitionHistory.length)
+
+    expect(finalState.state).toBe(baselineState.state)
+    expect(finalTransitions).toBe(baselineTransitions)
   } finally {
     await electronApp.close()
   }

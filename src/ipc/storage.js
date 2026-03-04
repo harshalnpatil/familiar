@@ -17,6 +17,9 @@ const {
   getStorageUsageBreakdown
 } = require('../storage/usage-breakdown')
 
+const STORAGE_USAGE_TTL_MS = 3000
+const storageUsageCache = new Map()
+
 const LEADING_TIMESTAMP_PATTERN = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z?)/
 const SESSION_ID_PATTERN = /^session-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z?)$/
 
@@ -615,12 +618,65 @@ async function handleGetStorageUsageBreakdown(_event, _payload = {}, options = {
   const settings = settingsLoader()
   const contextFolderPath =
     typeof settings?.contextFolderPath === 'string' ? settings.contextFolderPath : ''
-  const usage = getUsageBreakdown({ contextFolderPath, logger })
 
-  return {
-    ok: true,
-    ...usage
+  const normalizedContextFolderPath =
+    typeof contextFolderPath === 'string' ? contextFolderPath.trim() : ''
+  const cacheKey = normalizedContextFolderPath.length > 0 ? path.resolve(normalizedContextFolderPath) : ''
+  const nowMs = Date.now()
+  const cached = storageUsageCache.get(cacheKey)
+
+  if (cached) {
+    if (cached.promise) {
+      return cached.promise
+    }
+    if (cached.expiresAt > nowMs && cached.usage) {
+      return {
+        ok: true,
+        ...cached.usage
+      }
+    }
   }
+
+  const computePromise = Promise.resolve().then(() => {
+    const usage = getUsageBreakdown({ contextFolderPath, logger })
+    const normalized = {
+      totalBytes: Number.isFinite(usage?.totalBytes) ? usage.totalBytes : 0,
+      screenshotsBytes: Number.isFinite(usage?.screenshotsBytes) ? usage.screenshotsBytes : 0,
+      steelsMarkdownBytes: Number.isFinite(usage?.steelsMarkdownBytes) ? usage.steelsMarkdownBytes : 0,
+      systemBytes: Number.isFinite(usage?.systemBytes) ? usage.systemBytes : 0
+    }
+    return {
+      ok: true,
+      ...normalized
+    }
+  })
+
+  storageUsageCache.set(cacheKey, { promise: computePromise })
+  try {
+    const response = await computePromise
+    storageUsageCache.set(cacheKey, {
+      usage: {
+        totalBytes: response.totalBytes,
+        screenshotsBytes: response.screenshotsBytes,
+        steelsMarkdownBytes: response.steelsMarkdownBytes,
+        systemBytes: response.systemBytes
+      },
+      expiresAt: nowMs + STORAGE_USAGE_TTL_MS,
+      promise: null
+    })
+    return {
+      ...response
+    }
+  } catch (error) {
+    storageUsageCache.delete(cacheKey)
+    logger.error('Failed to calculate storage usage breakdown', {
+      contextFolderPath: normalizedContextFolderPath,
+      message: error?.message || String(error)
+    })
+    throw error
+  }
+
+  
 }
 
 function registerStorageHandlers() {

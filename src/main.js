@@ -6,6 +6,7 @@ const {
     ipcMain,
     nativeTheme
 } = require('electron');
+const { existsSync } = require('node:fs');
 const path = require('node:path');
 
 const { registerIpcHandlers } = require('./ipc');
@@ -55,6 +56,10 @@ let recordingOffReminder = null;
 let autoSessionCleanupScheduler = null;
 let retentionChangeTrigger = null;
 let redactionWarningShownForCurrentRecordingSession = false;
+let lastScreenCaptureSettings = {
+    enabled: null,
+    contextFolderPath: ''
+};
 const e2eToastEvents = [];
 const E2E_TOAST_EVENT_LIMIT = 20;
 
@@ -156,22 +161,39 @@ ensureHomebrewPath({ logger: console });
 const enterBackgroundMode = () => setAppMode({ app, mode: APP_MODE.BACKGROUND, logger: console });
 const enterForegroundMode = () => setAppMode({ app, mode: APP_MODE.FOREGROUND, logger: console });
 
-const updateScreenCaptureFromSettings = () => {
+const normalizeControllerContextFolderPath = (value) =>
+    typeof value === 'string' ? value : '';
+
+const updateScreenCaptureFromSettings = (nextSettings = null) => {
     if (!screenStillsController) {
         return;
     }
-    const settings = loadSettings();
-    const payload = {
-        enabled: settings.alwaysRecordWhenActive === true,
-        contextFolderPath: typeof settings.contextFolderPath === 'string' ? settings.contextFolderPath : ''
-    };
-    if (screenStillsController) {
-        screenStillsController.updateSettings(payload);
+
+    const settings = nextSettings || loadSettings();
+    const nextEnabled = settings?.alwaysRecordWhenActive === true;
+    const nextContextFolderPath = normalizeControllerContextFolderPath(settings?.contextFolderPath);
+
+    if (
+        lastScreenCaptureSettings.enabled === nextEnabled &&
+        lastScreenCaptureSettings.contextFolderPath === nextContextFolderPath
+    ) {
+        return;
     }
+
+    lastScreenCaptureSettings = {
+        enabled: nextEnabled,
+        contextFolderPath: nextContextFolderPath
+    };
+
+    const payload = {
+        enabled: nextEnabled,
+        contextFolderPath: nextContextFolderPath
+    };
+    screenStillsController.updateSettings(payload);
 };
 
 const handleMainSettingsSaved = (nextSettings = null) => {
-    updateScreenCaptureFromSettings();
+    updateScreenCaptureFromSettings(nextSettings);
 
     if (!retentionChangeTrigger) {
         return;
@@ -363,6 +385,19 @@ const getScreenStillsStatusPayload = () => {
     };
 };
 
+const notifyScreenStillsStateChanged = () => {
+  if (!settingsWindow || settingsWindow.isDestroyed()) {
+    return;
+  }
+  const payload = getScreenStillsStatusPayload();
+  settingsWindow.webContents.send('settings:screenStillsStateChanged', payload);
+};
+
+const handleRecordingStateTransition = (transition) => {
+  handleRecordingOffReminderTransition(transition);
+  notifyScreenStillsStateChanged();
+};
+
 const getTrayRecordingActionLabel = () => {
     if (!trayHandlers) {
         return '';
@@ -381,6 +416,7 @@ const getTrayRecordingActionLabel = () => {
 const runCaptureActionAndRefreshTray = async (action) => {
     const result = await action();
     refreshTrayMenu();
+    notifyScreenStillsStateChanged();
     return result;
 };
 
@@ -408,7 +444,22 @@ if (process.platform === 'linux' && (isE2E || isCI)) {
     app.commandLine.appendSwitch('disable-dev-shm-usage');
 }
 
+const getSettingsWindowHtmlPath = () => {
+    const reactHtmlPath = path.join(__dirname, 'dashboard', 'index-react.html');
+    const reactBundlePath = path.join(__dirname, 'dashboard', 'react-dist', 'dashboard-react.js');
+
+    if (!existsSync(reactHtmlPath) || !existsSync(reactBundlePath)) {
+        console.error('React dashboard assets missing', {
+            reactHtmlPath,
+            reactBundlePath
+        });
+    }
+
+    return reactHtmlPath;
+};
+
 function createSettingsWindow() {
+    const dashboardHtmlPath = getSettingsWindowHtmlPath();
     const window = new BrowserWindow({
         // Keep the content area width stable while matching the sidebar width from the new design.
         width: 774,
@@ -427,7 +478,7 @@ function createSettingsWindow() {
         },
     });
 
-    window.loadFile(path.join(__dirname, 'dashboard', 'index.html'));
+    window.loadFile(dashboardHtmlPath);
 
     window.on('close', (event) => {
         if (!isQuitting && !app.isQuittingForUpdate) {
@@ -664,9 +715,9 @@ if (isPrimaryInstance) {
             }
             screenStillsController = createScreenStillsController({
                 logger: console,
-                onError: handleStillsError,
+            onError: handleStillsError,
                 onRedactionWarning: handleRedactionWarning,
-                onStateTransition: handleRecordingOffReminderTransition,
+                onStateTransition: handleRecordingStateTransition,
                 presenceMonitor,
                 ...(pauseDurationOverrideMs ? { pauseDurationMs: pauseDurationOverrideMs } : {})
             });

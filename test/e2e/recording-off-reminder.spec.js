@@ -61,7 +61,7 @@ const ensureRecordingPrereqs = async (window) => {
 const setContextFolder = async (window) => {
   await window.getByRole('tab', { name: 'Storage' }).click()
   const confirmDialog = confirmMoveContextFolder(window)
-  await window.locator('#recording-open-folder').click()
+  await window.locator('#recording-move-folder').click()
   await confirmDialog
   await expect(window.locator('#context-folder-status')).toHaveText('Saved.')
 }
@@ -111,25 +111,25 @@ test('recording-off reminder shows toast after e2e-configured delay', async () =
     await window.waitForLoadState('domcontentloaded')
 
     await ensureRecordingPrereqs(window)
-  await setIdleSeconds(electronApp, 0)
-  await setContextFolder(window)
-  await enableRecordingToggle(window)
-  await clearToastEvents(window)
-  await expect
-    .poll(async () => {
-      const status = await window.evaluate(() => window.familiar.getScreenStillsStatus())
-      return status?.enabled === true && status?.state
-    }, { timeout: 4000 })
-    .toBeTruthy()
+    await setIdleSeconds(electronApp, 0)
+    await setContextFolder(window)
+    await enableRecordingToggle(window)
+    await clearToastEvents(window)
+    await expect
+      .poll(async () => {
+        const status = await window.evaluate(() => window.familiar.getScreenStillsStatus())
+        return status?.enabled === true && status?.state
+      }, { timeout: 4000 })
+      .toBeTruthy()
 
-  const countdownStartMs = Date.now()
-  await disableRecordingToggle(window)
-  await expect
-    .poll(async () => {
-      const status = await window.evaluate(() => window.familiar.getScreenStillsStatus())
-      return status?.enabled
-    }, { timeout: 4000 })
-    .toBe(false)
+    const countdownStartMs = Date.now()
+    await disableRecordingToggle(window)
+    await expect
+      .poll(async () => {
+        const status = await window.evaluate(() => window.familiar.getScreenStillsStatus())
+        return status?.enabled
+      }, { timeout: 4000 })
+      .toBe(false)
 
     await expect
       .poll(

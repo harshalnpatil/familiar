@@ -458,3 +458,46 @@ test('stills controller emits transition reasons including user-toggle-off', asy
   assert.equal(controller.getState().state, 'disabled')
   assert.equal(calls.stop.length >= 1, true)
 })
+
+test('stills controller ignores repeated unchanged capture settings', async () => {
+  const transitions = []
+  const contextFolderPath = makeTempContext()
+  const presence = createPresenceMonitor()
+  const calls = { start: [], stop: [] }
+  const recorder = {
+    start: async (payload) => {
+      calls.start.push(payload)
+    },
+    stop: async (payload) => {
+      calls.stop.push(payload)
+    }
+  }
+  const markdownWorker = { start: () => {}, stop: () => {} }
+
+  const controller = createScreenStillsController({
+    presenceMonitor: presence,
+    recorder,
+    markdownWorker,
+    onStateTransition: (transition) => transitions.push(transition),
+    logger: silentLogger
+  })
+
+  controller.start()
+  controller.updateSettings({ enabled: true, contextFolderPath })
+
+  presence.emit('active')
+  await flushPromises()
+
+  assert.equal(calls.start.length, 1)
+  assert.equal(controller.getState().state, 'recording')
+  const transitionsAfterStart = transitions.length
+
+  controller.updateSettings({ enabled: true, contextFolderPath })
+  controller.updateSettings({ enabled: true, contextFolderPath })
+  await flushPromises()
+
+  assert.equal(calls.start.length, 1)
+  assert.equal(calls.stop.length, 0)
+  assert.equal(controller.getState().state, 'recording')
+  assert.equal(transitions.length, transitionsAfterStart)
+})

@@ -23,6 +23,40 @@ test('saveSettings persists contextFolderPath', () => {
   assert.equal(loaded.contextFolderPath, contextDir)
 })
 
+test('saveSettings does not rewrite when effective settings are unchanged', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
+  const settingsDir = path.join(tempRoot, 'settings')
+  const contextDir = path.join(tempRoot, 'context')
+  const alternateContextDir = path.join(tempRoot, 'context-alt')
+  fs.mkdirSync(contextDir)
+  fs.mkdirSync(alternateContextDir)
+  const settingsPath = path.join(settingsDir, SETTINGS_FILE_NAME)
+
+  saveSettings({ contextFolderPath: contextDir }, { settingsDir })
+
+  const originalWriteFileSync = fs.writeFileSync
+  const writeCalls = []
+  fs.writeFileSync = (...writeArgs) => {
+    writeCalls.push(writeArgs[0])
+    return originalWriteFileSync(...writeArgs)
+  }
+
+  try {
+    const unchangedResult = saveSettings({ contextFolderPath: contextDir }, { settingsDir })
+    assert.equal(unchangedResult, null)
+    assert.equal(writeCalls.length, 0)
+
+    const changedResult = saveSettings({ contextFolderPath: alternateContextDir }, { settingsDir })
+    assert.equal(changedResult, settingsPath)
+    assert.equal(writeCalls.length, 1)
+  } finally {
+    fs.writeFileSync = originalWriteFileSync
+  }
+
+  const loaded = loadSettings({ settingsDir })
+  assert.equal(loaded.contextFolderPath, alternateContextDir)
+})
+
 test('saveSettings persists familiarSkillInstalledVersion', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
   const settingsDir = path.join(tempRoot, 'settings')

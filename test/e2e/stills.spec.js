@@ -3,11 +3,11 @@ const os = require('node:os')
 const path = require('node:path')
 const { test, expect } = require('playwright/test')
 const { _electron: electron } = require('playwright')
+const { confirmMoveContextFolder } = require('./helpers')
 const {
   FAMILIAR_BEHIND_THE_SCENES_DIR_NAME,
   STILLS_DIR_NAME
 } = require('../../src/const')
-const { confirmMoveContextFolder } = require('./helpers')
 
 const buildLaunchArgs = () => {
   const launchArgs = ['.']
@@ -60,7 +60,7 @@ const ensureRecordingPrereqs = async (window) => {
 const setContextFolder = async (window) => {
   await window.getByRole('tab', { name: 'Storage' }).click()
   const confirmDialog = confirmMoveContextFolder(window)
-  await window.locator('#recording-open-folder').click()
+  await window.locator('#recording-move-folder').click()
   await confirmDialog
   await expect(window.locator('#context-folder-status')).toHaveText('Saved.')
 }
@@ -252,6 +252,31 @@ test('stills save captures to the stills folder', async () => {
     const captureFiles = listCaptureFiles(sessionDir)
     expect(captureFiles.length).toBeGreaterThan(0)
     assertCaptureFiles(sessionDir, captureFiles)
+  } finally {
+    await electronApp.close()
+  }
+})
+
+test('capturing status is off when capture toggle is disabled and permissions are granted', async () => {
+  const contextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-context-stills-'))
+  const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-e2e-'))
+
+  const electronApp = await launchApp({
+    contextPath,
+    settingsDir,
+    env: {
+      FAMILIAR_E2E_SCREEN_RECORDING_PERMISSION: 'granted'
+    }
+  })
+
+  try {
+    const window = await electronApp.firstWindow()
+    await window.waitForLoadState('domcontentloaded')
+
+    await window.getByRole('tab', { name: 'Capturing' }).click()
+    await expect(window.locator('#recording-always-record-when-active')).not.toBeChecked()
+    await expect(window.locator('#recording-status')).toHaveText('Off', { timeout: 8000 })
+    await expect(window.locator('#recording-status-dot')).not.toHaveClass(/bg-red-500/)
   } finally {
     await electronApp.close()
   }

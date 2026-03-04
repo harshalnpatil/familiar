@@ -174,6 +174,35 @@ test('handleGetStorageUsageBreakdown returns storage categories and total', asyn
   })
 })
 
+test('handleGetStorageUsageBreakdown deduplicates concurrent lookups for same context path', async () => {
+  await withStorageModule(async ({ storageModule }) => {
+    const contextFolderPath = '/tmp/context'
+    let lookupCalls = 0
+    const getStorageUsageBreakdown = () => {
+      lookupCalls += 1
+      return {
+        totalBytes: 24,
+        screenshotsBytes: 8,
+        steelsMarkdownBytes: 12,
+        systemBytes: 4
+      }
+    }
+    const commonOptions = {
+      settingsLoader: () => ({ contextFolderPath }),
+      getStorageUsageBreakdown
+    }
+
+    const first = storageModule.handleGetStorageUsageBreakdown({}, {}, commonOptions)
+    const second = storageModule.handleGetStorageUsageBreakdown({}, {}, commonOptions)
+    const [firstResult, secondResult] = await Promise.all([first, second])
+
+    assert.equal(firstResult.ok, true)
+    assert.equal(secondResult.ok, true)
+    assert.deepEqual(firstResult, secondResult)
+    assert.equal(lookupCalls, 1)
+  })
+})
+
 test('handleDeleteFiles deletes matching files inside the selected window', async () => {
   await withStorageModule(async ({ storageModule }) => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-storage-ipc-'))

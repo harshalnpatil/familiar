@@ -6,8 +6,11 @@ const { _electron: electron } = require('playwright')
 
 const launchElectron = (options = {}) => {
   const appRoot = path.join(__dirname, '../..')
-  const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-e2e-'))
+  const settingsDir = options.settingsDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-e2e-'))
   const skillHomeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-skill-home-e2e-'))
+  if (options.initialSettings) {
+    fs.writeFileSync(path.join(settingsDir, 'settings.json'), JSON.stringify(options.initialSettings, null, 2))
+  }
   const launchArgs = ['.']
   if (process.platform === 'linux') {
     launchArgs.push('--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage')
@@ -66,17 +69,17 @@ const installWizardSkill = async (window) => {
   await expect(skillStatus).toContainText('Installed')
 }
 
-const openCloudCoWorkGuide = async (window) => {
+const openClaudeCoworkGuide = async (window) => {
   const wizardStepThree = window.locator('[data-wizard-step="3"]')
   const skillStatus = window.locator('#wizard-skill-status')
-  const cloudCoWorkOption = wizardStepThree.locator('.skill-picker-option', { hasText: 'Claude Cowork' })
-  const cloudCoWorkHarness = wizardStepThree.locator('input[name="wizard-skill-harness"][value="cloud-cowork"]')
+  const claudeCoworkOption = wizardStepThree.locator('.skill-picker-option', { hasText: 'Claude Cowork' })
+  const claudeCoworkHarness = wizardStepThree.locator('input[name="wizard-skill-harness"][value="cloud-cowork"]')
   const guideContainer = window.locator('#wizard-cloud-cowork-guide')
   const guideDoneButton = window.locator('#wizard-cloud-cowork-done')
 
   await expect(wizardStepThree).toBeVisible()
-  if (!(await cloudCoWorkHarness.isChecked())) {
-    await cloudCoWorkOption.click()
+  if (!(await claudeCoworkHarness.isChecked())) {
+    await claudeCoworkOption.click()
   }
 
   await expect(guideContainer).toBeVisible()
@@ -260,7 +263,7 @@ test('wizard hides wizard tab after Done', async () => {
   }
 })
 
-test('wizard cloud co-work path opens marketplace guide and does not use local install path messaging', async () => {
+test('wizard Claude Cowork path opens marketplace guide and does not use local install path messaging', async () => {
   const appRoot = path.join(__dirname, '../..')
   const contextPath = path.join(appRoot, 'test', 'fixtures', 'context')
   const { electronApp, settingsDir } = launchElectron({
@@ -280,7 +283,7 @@ test('wizard cloud co-work path opens marketplace guide and does not use local i
     await completeWizardPermissionsStep(window, nextButton)
     await expect(window.locator('[data-wizard-step="3"]')).toBeVisible()
 
-    await openCloudCoWorkGuide(window)
+    await openClaudeCoworkGuide(window)
     await expect(nextButton).toBeEnabled()
     await nextButton.click()
     await expect(window.locator('[data-wizard-step="4"]')).toBeVisible()
@@ -289,6 +292,34 @@ test('wizard cloud co-work path opens marketplace guide and does not use local i
     const stored = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
     expect(stored.skillInstaller?.harness ?? []).toEqual([])
     expect(stored.skillInstaller?.installPath ?? []).toEqual([])
+  } finally {
+    await (await electronApp).close()
+  }
+})
+
+test('launching with wizardCompleted true skips wizard tab and starts on storage', async () => {
+  const appRoot = path.join(__dirname, '../..')
+  const contextPath = path.join(appRoot, 'test', 'fixtures', 'context')
+  const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-e2e-'))
+
+  const { electronApp } = launchElectron({
+    contextPath,
+    settingsDir,
+    initialSettings: {
+      wizardCompleted: true,
+      contextFolderPath: path.resolve(contextPath),
+      stills_markdown_extractor: { type: 'apple_vision_ocr' }
+    },
+    env: { FAMILIAR_LLM_MOCK: '1', FAMILIAR_LLM_MOCK_TEXT: 'gibberish' }
+  })
+
+  try {
+    const window = await (await electronApp).firstWindow()
+    await window.waitForLoadState('domcontentloaded')
+
+    await expect(window.locator('#section-title')).toHaveText('Storage')
+    await expect(window.getByRole('tab', { name: 'Wizard' })).toBeHidden()
+    await expect(window.locator('[data-wizard-step="1"]')).toBeHidden()
   } finally {
     await (await electronApp).close()
   }

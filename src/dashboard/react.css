@@ -1,0 +1,513 @@
+html,
+body,
+#familiar-dashboard-react-root {
+  height: 100%;
+}
+
+#familiar-dashboard-react-root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+.react-fallback {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  gap: 8px;
+  color: #334155;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.react-fallback h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.react-fallback p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.react-shell {
+  height: 100vh;
+  display: flex;
+  color: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #ffffff;
+}
+
+.react-sidebar {
+  width: 210px;
+  border-right: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.react-brand {
+  padding: 14px 16px;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.react-sidebar nav {
+  padding: 10px 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.react-nav-item {
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #475569;
+  text-align: left;
+  padding: 9px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.react-nav-item.is-active,
+.react-nav-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.react-main {
+  flex: 1;
+  padding: 16px;
+  overflow: auto;
+  background: linear-gradient(180deg, #ffffff, #f8fafc 320px);
+}
+
+.react-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.react-header h1 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.react-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.react-status-bar {
+  min-height: 22px;
+  margin-bottom: 12px;
+}
+
+.react-message {
+  display: inline-block;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.react-message.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.react-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.react-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.react-card h3 {
+  margin: 0 0 6px;
+}
+
+.react-card p {
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+}
+
+.react-text-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.react-text-list li + li {
+  margin-top: 6px;
+}
+
+.react-inline-status {
+  font-size: 12px;
+  color: #334155;
+  margin: 10px 0;
+}
+
+.react-section-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.react-btn {
+  border: 1px solid #6366f1;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.react-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.react-btn-subtle {
+  background: #ffffff;
+  border-color: #cbd5f5;
+  color: #334155;
+}
+
+.react-small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.react-wizard-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.react-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.react-grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.react-input,
+.react-select {
+  width: min(420px, 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+}
+
+.react-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: #334155;
+}
+
+.react-inline-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.react-skill-picker-options {
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: grid;
+}
+
+.react-skill-picker-option {
+  display: block;
+}
+
+.react-skill-picker-option-card {
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #334155;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  display: flex;
+  cursor: pointer;
+}
+
+.react-skill-picker-option-card:hover {
+  background: #f8fafc;
+}
+
+.react-skill-picker-option-card.is-selected {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  color: #1e293b;
+}
+
+.react-skill-picker-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.react-skill-picker-option-card.is-selected .react-skill-picker-radio {
+  border-color: #4f46e5;
+  background: #4f46e5;
+}
+
+.react-skill-picker-radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: #fff;
+  transform: scale(0);
+  transition: transform 120ms ease;
+}
+
+.react-skill-picker-option-card.is-selected .react-skill-picker-radio-dot {
+  transform: scale(1);
+}
+
+.react-skill-picker-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.react-skill-picker-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.react-skill-picker-icon--light-chip {
+  padding: 2px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.react-skill-picker-label {
+  font-size: 12px;
+}
+
+.react-skill-picker-note {
+  margin-top: 4px;
+  margin-left: 26px;
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.react-install-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(9, 9, 11, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.react-install-guide-card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  color: #334155;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+}
+
+.react-install-guide-title-wrap {
+  margin-bottom: 10px;
+}
+
+.react-install-guide-subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.react-install-guide-steps {
+  padding-left: 16px;
+  font-size: 11px;
+  color: #475569;
+  display: grid;
+  gap: 4px;
+  margin: 0 0 10px;
+}
+
+.react-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.react-hidden {
+  display: none;
+}
+
+.react-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.react-dot.bg-zinc-400 {
+  background: #a1a1aa;
+}
+
+.react-dot.bg-amber-500 {
+  background: #f59e0b;
+}
+
+.react-dot.bg-red-500 {
+  background: #ef4444;
+}
+
+.react-dot.bg-emerald-500 {
+  background: #10b981;
+}
+
+.react-help-text {
+  margin: 10px 0 0;
+  color: #334155;
+  font-size: 12px;
+}
+
+.react-help-text-error {
+  color: #b91c1c;
+}
+
+.react-code {
+  display: block;
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: #475569;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.react-progress {
+  margin-top: 12px;
+}
+
+.react-progress-bar-wrap {
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.react-progress-bar-inner {
+  height: 100%;
+  display: block;
+  border-radius: 999px;
+  background: #4f46e5;
+}
+
+/* Tailwind peer-checked: only works for direct siblings, not nested descendants.
+   These rules replicate the intended checked-state styles for the capture toggle card's
+   inner elements (icon, switch, knob, subtitles). */
+#recording-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-icon {
+  background-color: var(--color-indigo-100);
+  border-color: transparent;
+  color: var(--color-indigo-600);
+}
+
+#recording-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-switch {
+  background-color: var(--color-indigo-600);
+}
+
+#recording-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-knob {
+  transform: translateX(1.5rem);
+}
+
+#recording-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-subtitle-off {
+  display: none;
+}
+
+#recording-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-subtitle-on {
+  display: block;
+}
+
+#wizard-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-icon {
+  background-color: var(--color-indigo-100);
+  border-color: transparent;
+  color: var(--color-indigo-600);
+}
+
+#wizard-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-switch {
+  background-color: var(--color-indigo-600);
+}
+
+#wizard-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-knob {
+  transform: translateX(1.5rem);
+}
+
+#wizard-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-subtitle-off {
+  display: none;
+}
+
+#wizard-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-subtitle-on {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  #recording-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-icon {
+    background-color: color-mix(in oklab, var(--color-indigo-900) 50%, transparent);
+    color: var(--color-indigo-400);
+  }
+
+  #wizard-always-record-when-active:checked + .wizard-capture-toggle-card .wizard-capture-toggle-icon {
+    background-color: color-mix(in oklab, var(--color-indigo-900) 50%, transparent);
+    color: var(--color-indigo-400);
+  }
+}

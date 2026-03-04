@@ -96,6 +96,10 @@ function createScreenStillsController(options = {}) {
     return validateContextFolderPath(settings.contextFolderPath);
   }
 
+  function normalizeContextFolderPath(pathValue) {
+    return typeof pathValue === 'string' ? pathValue : '';
+  }
+
   function canRecord() {
     if (!settings.enabled) {
       return false;
@@ -377,9 +381,15 @@ function createScreenStillsController(options = {}) {
 
   function updateSettings({ enabled, contextFolderPath } = {}) {
     const wasEnabled = settings.enabled;
+    const nextContextFolderPath = normalizeContextFolderPath(contextFolderPath);
+
+    if (settings.enabled === (enabled === true) && settings.contextFolderPath === nextContextFolderPath) {
+      return;
+    }
+
     settings = {
       enabled: enabled === true,
-      contextFolderPath: typeof contextFolderPath === 'string' ? contextFolderPath : ''
+      contextFolderPath: nextContextFolderPath
     };
 
     if (!settings.enabled) {

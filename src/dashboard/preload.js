@@ -30,6 +30,11 @@ contextBridge.exposeInMainWorld('familiar', {
     ipcRenderer.on('settings:alwaysRecordWhenActiveChanged', listener)
     return () => ipcRenderer.removeListener('settings:alwaysRecordWhenActiveChanged', listener)
   },
+  onScreenStillsStateChanged: (handler) => {
+    const listener = (_event, payload) => handler(payload)
+    ipcRenderer.on('settings:screenStillsStateChanged', listener)
+    return () => ipcRenderer.removeListener('settings:screenStillsStateChanged', listener)
+  },
   onSettingsWindowOpened: (handler) => {
     const listener = (_event, payload) => handler(payload)
     ipcRenderer.on('settings:window-opened', listener)

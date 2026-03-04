@@ -38,10 +38,10 @@ test('check for updates shows disabled message in e2e mode', async () => {
     const window = await electronApp.firstWindow()
     await window.waitForLoadState('domcontentloaded')
 
-    await window.locator('#updates-check').click()
+    await window.locator('#updates-sidebar-check').click()
 
-    await expect(window.locator('#updates-error')).toHaveText('Auto-updates are disabled in this build.')
-    await expect(window.locator('#updates-status')).toBeHidden()
+    await expect(window.locator('#updates-sidebar-error')).toHaveText('Auto-updates are disabled in this build.')
+    await expect(window.locator('#updates-sidebar-status')).toBeHidden()
   } finally {
     await electronApp.close()
   }

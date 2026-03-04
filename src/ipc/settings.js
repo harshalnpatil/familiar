@@ -303,16 +303,20 @@ function handleSaveSettings(_event, payload) {
     }
 
     try {
-        saveSettings(settingsPayload);
-        console.log('Settings saved');
-        if (onSettingsSaved) {
-            try {
-                onSettingsSaved(loadSettings());
-            } catch (error) {
-                console.error('Failed to notify settings update', error);
+        const saveResult = saveSettings(settingsPayload);
+        if (saveResult) {
+            console.log('Settings saved');
+            if (onSettingsSaved) {
+                try {
+                    onSettingsSaved(loadSettings());
+                } catch (error) {
+                    console.error('Failed to notify settings update', error);
+                }
             }
         }
-        return { ok: true };
+        return {
+            ok: true
+        };
     } catch (error) {
         console.error('Failed to save settings', error);
         return { ok: false, message: 'Failed to save settings.' };

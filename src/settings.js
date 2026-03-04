@@ -6,6 +6,54 @@ const { SETTINGS_DIR_NAME, SETTINGS_FILE_NAME } = require('./const');
 const { normalizeStringArray } = require('./utils/list');
 const { resolveAutoCleanupRetentionDays } = require('./storage/auto-cleanup-retention');
 
+const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const areDeepEqual = (left, right) => {
+    if (left === right) {
+        return true;
+    }
+
+    if (!isPlainObject(left) && !Array.isArray(left) && typeof left !== 'object') {
+        return left === right;
+    }
+
+    if (!isPlainObject(right) && !Array.isArray(right) && typeof right !== 'object') {
+        return left === right;
+    }
+
+    if (Array.isArray(left) && Array.isArray(right)) {
+        if (left.length !== right.length) {
+            return false;
+        }
+        for (let index = 0; index < left.length; index += 1) {
+            if (!areDeepEqual(left[index], right[index])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    if (isPlainObject(left) && isPlainObject(right)) {
+        const leftKeys = Object.keys(left);
+        const rightKeys = Object.keys(right);
+        if (leftKeys.length !== rightKeys.length) {
+            return false;
+        }
+        for (let index = 0; index < leftKeys.length; index += 1) {
+            const key = leftKeys[index];
+            if (key !== rightKeys[index]) {
+                return false;
+            }
+            if (!areDeepEqual(left[key], right[key])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    return false;
+};
+
 const resolveSettingsDir = (settingsDir) =>
     settingsDir || process.env.FAMILIAR_SETTINGS_DIR || path.join(os.homedir(), SETTINGS_DIR_NAME);
 
@@ -222,6 +270,12 @@ const saveSettings = (settings, options = {}) => {
             : null;
     } else if (Object.prototype.hasOwnProperty.call(existing, 'familiarSkillInstalledVersion')) {
         payload.familiarSkillInstalledVersion = existing.familiarSkillInstalledVersion;
+    }
+
+    const isNoOp = areDeepEqual(existing || {}, payload);
+
+    if (isNoOp) {
+        return null;
     }
 
     fs.writeFileSync(settingsPath, JSON.stringify(payload, null, 2), 'utf-8');

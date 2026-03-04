@@ -55,7 +55,7 @@ test.describe('clipboard mirroring', () => {
       // Configure context folder.
       await window.getByRole('tab', { name: 'Storage' }).click()
       const confirmDialog = confirmMoveContextFolder(window)
-      await window.locator('#recording-open-folder').click()
+      await window.locator('#recording-move-folder').click()
       await confirmDialog
       await expect(window.locator('#context-folder-status')).toHaveText('Saved.')
 
@@ -145,9 +145,9 @@ test.describe('clipboard mirroring', () => {
       const window = await electronApp.firstWindow()
       await window.waitForLoadState('domcontentloaded')
 
-      const confirmDialog = confirmMoveContextFolder(window)
       await window.getByRole('tab', { name: 'Storage' }).click()
-      await window.locator('#recording-open-folder').click()
+      const confirmDialog = confirmMoveContextFolder(window)
+      await window.locator('#recording-move-folder').click()
       await confirmDialog
       await expect(window.locator('#context-folder-status')).toHaveText('Saved.')
 
@@ -233,9 +233,9 @@ test.describe('clipboard mirroring', () => {
       const window = await electronApp.firstWindow()
       await window.waitForLoadState('domcontentloaded')
 
-      const confirmDialog = confirmMoveContextFolder(window)
       await window.getByRole('tab', { name: 'Storage' }).click()
-      await window.locator('#recording-open-folder').click()
+      const confirmDialog = confirmMoveContextFolder(window)
+      await window.locator('#recording-move-folder').click()
       await confirmDialog
       await expect(window.locator('#context-folder-status')).toHaveText('Saved.')
 

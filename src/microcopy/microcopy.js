@@ -32,6 +32,7 @@ const microcopy = {
     html: {
       pageTitle: 'Familiar Settings',
       brandName: 'Familiar',
+      appName: 'Familiar',
       sidebarAriaLabelSettingsSections: 'Settings Sections',
       sidebarRecordingAriaLabelToggleCapturing: 'Toggle capturing',
       sidebarRecordingAriaLabelPauseOrResumeCapturing: 'Pause or resume capturing',
@@ -117,29 +118,29 @@ const microcopy = {
       wizardInstallSkillTitle: 'Set up Familiar in your tools',
       wizardInstallSkillDescription: 'Pick where Familiar should be available',
       wizardHarnessClaudeCode: 'Claude Code',
-      wizardHarnessCloudCowork: 'Claude Cowork',
+      wizardHarnessClaudeCowork: 'Claude Cowork',
       wizardHarnessCodex: 'Codex',
       wizardHarnessAntigravity: 'Antigravity',
       wizardHarnessCursor: 'Cursor',
       wizardCursorRestartNote: 'Restart Cursor for the skill to take effect.',
-      wizardCloudCoworkGuideTitle: 'Claude Cowork install guide',
-      wizardCloudCoworkGuideSubtitle: 'Use marketplace installation in Cowork.',
-      wizardCloudCoworkGuideStep1: 'Open Settings from the top left corner (or press: ⌘ + , ).',
-      wizardCloudCoworkGuideStep2: 'Go to Capabilities.',
-      wizardCloudCoworkGuideStep3: 'Toggle on Allow network egress.',
-      wizardCloudCoworkGuideStep4: 'Go back to the Cowork landing page (chat view).',
-      wizardCloudCoworkGuideStep5: 'Click plus sign (+) -> Plugins -> Add Plugin.',
-      wizardCloudCoworkGuideStep6: 'Go to Personal tab.',
-      wizardCloudCoworkGuideStep7: 'Click plus sign (+) -> Add marketplace from GitHub.',
-      wizardCloudCoworkGuideStep8:
+      wizardClaudeCoworkGuideTitle: 'Claude Cowork install guide',
+      wizardClaudeCoworkGuideSubtitle: 'Use marketplace installation in Cowork.',
+      wizardClaudeCoworkGuideStep1: 'Open Settings from the top left corner (or press: ⌘ + , ).',
+      wizardClaudeCoworkGuideStep2: 'Go to Capabilities.',
+      wizardClaudeCoworkGuideStep3: 'Toggle on Allow network egress.',
+      wizardClaudeCoworkGuideStep4: 'Go back to the Cowork landing page (chat view).',
+      wizardClaudeCoworkGuideStep5: 'Click plus sign (+) -> Plugins -> Add Plugin.',
+      wizardClaudeCoworkGuideStep6: 'Go to Personal tab.',
+      wizardClaudeCoworkGuideStep7: 'Click plus sign (+) -> Add marketplace from GitHub.',
+      wizardClaudeCoworkGuideStep8:
         'Paste https://github.com/familiar-software/familiar-claude-cowork-skill.',
-      wizardCloudCoworkGuideStep9: 'Click Sync.',
-      wizardCloudCoworkGuideStep10: 'Open the added marketplace and install the Familiar skill.',
-      wizardCloudCoworkGuideStep11:
+      wizardClaudeCoworkGuideStep9: 'Click Sync.',
+      wizardClaudeCoworkGuideStep10: 'Open the added marketplace and install the Familiar skill.',
+      wizardClaudeCoworkGuideStep11:
         'Go back to the Cowork landing page and choose a work folder that contains Familiar context.',
-      wizardCloudCoworkGuideStep12: 'Start a new Cowork session and invoke /familiar ....',
-      wizardCloudCoworkGuideCopyLink: 'Copy Link',
-      wizardCloudCoworkGuideDone: 'Done',
+      wizardClaudeCoworkGuideStep12: 'Start a new Cowork session and invoke /familiar ....',
+      wizardClaudeCoworkGuideCopyLink: 'Copy Link',
+      wizardClaudeCoworkGuideDone: 'Done',
       wizardAllSetTitle: "You're all set",
       wizardAllSetDescription:
         'Your context folder and capturing preferences are configured, and the skill install completed.',
@@ -202,6 +203,7 @@ const microcopy = {
       pauseFor10Min: 'Pause (10 min)'
     },
     settings: {
+      statusUpdating: 'Loading settings...',
       moduleUnavailableRestart: 'Settings module unavailable. Restart the app.',
       statusSaving: 'Saving...',
       statusSaved: 'Saved.',
@@ -225,13 +227,15 @@ const microcopy = {
         logCopyUnavailableRestart: 'Log copy unavailable. Restart the app.',
         failedToCopyLogFile: 'Failed to copy log file.',
         storageCleanupUnavailableRestart: 'Storage cleanup unavailable. Restart the app.',
-        failedToDeleteFiles: 'Failed to delete files.'
+        failedToDeleteFiles: 'Failed to delete files.',
+        failedToLoadStorageUsage: 'Failed to load storage usage.'
       },
       deletedFiles: 'Deleted files.',
       confirmAutoCleanupRetentionTemplate:
         'Change auto cleanup retention to {{retentionDays}} days?\n\nThis will run cleanup using the new retention setting.'
     },
     updates: {
+      checkForUpdatesLabel: 'Check for updates',
       statusCheckingForUpdates: 'Checking for updates...',
       statusAlreadyCheckingForUpdates: 'Already checking for updates...',
       statusNoUpdatesFound: 'No updates found.',
@@ -251,13 +255,33 @@ const microcopy = {
     wizard: {
       completeStepToContinue: 'Complete this step to continue.'
     },
+    settingsActions: {
+      openFolder: 'Open in Finder',
+      copyLog: 'Copy debug log',
+      pickFolder: 'Choose folder',
+      moveFolder: 'Change Folder',
+      save: 'Save',
+      refresh: 'Refresh',
+      install: 'Install',
+      checkPermissions: 'Check Permissions'
+    },
+    actions: {
+      wizardDone: 'Done'
+    },
+    recording: {
+      startLabel: 'Start capture',
+      stopLabel: 'Pause capture',
+      onLabel: 'Capturing',
+      offLabel: 'Not capturing',
+      disabledLabel: 'Capture disabled'
+    },
     wizardSkill: {
       harnessNames: {
         claude: 'Claude Code',
         codex: 'Codex',
         antigravity: 'Antigravity',
         cursor: 'Cursor',
-        cloudCowork: 'Claude Cowork'
+        claudeCowork: 'Claude Cowork'
       },
       messages: {
         installerUnavailableRestart: 'Skill installer unavailable. Restart the app.',
@@ -268,18 +292,18 @@ const microcopy = {
         pathUnavailable: '(path unavailable)',
         installPathsHeader: 'Install paths:',
         chooseHarnessFirst: 'Choose at least one harness first.',
-        cloudCoworkGuideUnavailableRestart: 'Claude Cowork guide unavailable. Restart the app.',
-        failedToOpenCloudCoworkGuide: 'Failed to open Claude Cowork guide.',
+        claudeCoworkGuideUnavailableRestart: 'Claude Cowork guide unavailable. Restart the app.',
+        failedToOpenClaudeCoworkGuide: 'Failed to open Claude Cowork guide.',
         installing: 'Installing...',
-        openedCloudCoworkGuide: 'Opened Claude Cowork guide.',
+        openedClaudeCoworkGuide: 'Opened Claude Cowork guide.',
         failedToInstallSkill: 'Failed to install skill.',
         installedAndFailedTemplate:
           'Installed for {{succeededHarnesses}}. Failed for {{failedHarnesses}}: {{message}}',
         installedAndAdditionalFailureTemplate: 'Installed for {{succeededHarnesses}}. {{message}}',
-        openedCloudCoworkGuideCombinedTemplate: '{{status}} Opened Claude Cowork guide.'
+        openedClaudeCoworkGuideCombinedTemplate: '{{status}} Opened Claude Cowork guide.'
       }
     },
-    cloudCoworkGuide: {
+    claudeCoworkGuide: {
       marketplaceLinkCopied: 'Marketplace link copied.',
       failedToCopyLink: 'Failed to copy link.'
     },
@@ -289,6 +313,9 @@ const microcopy = {
         failedToLoad: 'Failed to load storage usage.'
       }
     }
+  },
+  general: {
+    unknown: '—'
   }
 }
 

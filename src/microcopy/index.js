@@ -113,8 +113,8 @@ const formatters = {
       succeededHarnesses,
       message
     }),
-  wizardSkillOpenedCloudCoworkGuideCombined: (status) =>
-    formatTemplate(microcopy.dashboard.wizardSkill.messages.openedCloudCoworkGuideCombinedTemplate, { status })
+  wizardSkillOpenedClaudeCoworkGuideCombined: (status) =>
+    formatTemplate(microcopy.dashboard.wizardSkill.messages.openedClaudeCoworkGuideCombinedTemplate, { status })
 }
 
 assertNoSpaceKeys(microcopy)
