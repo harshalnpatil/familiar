@@ -26,7 +26,7 @@ function registerSkillHandlers() {
             return { ok: true, path: result.path };
         } catch (error) {
             console.error('Failed to install skill', error);
-            return { ok: false, message: formatSkillError('Failed to install skill.', error) };
+            return { ok: false, message: formatSkillError('Failed to connect agent.', error) };
         }
     });
 

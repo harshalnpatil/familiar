@@ -40,7 +40,7 @@ const microcopy = {
       navWizard: 'Wizard',
       navStorage: 'Storage',
       navCapturing: 'Capturing',
-      navInstallSkill: 'Install Skill',
+      navInstallSkill: 'Connect Agent',
       updatesCheckForUpdates: 'Check for Updates',
       recordingAriaLabelCapturingSettings: 'Capturing settings',
       recordingPermissionsLabel: 'Permissions',
@@ -75,7 +75,7 @@ const microcopy = {
       storageUsageCalculating: 'Calculating...',
       storageUsageTextFilesUsing: 'Text files using',
       storageUsageScreenshotsUsing: 'Screenshots using',
-      storageDeleteRecentFilesTitle: 'Delete recent files',
+      storageDeleteRecentFilesTitle: 'Delete Recent Files',
       storageDeleteRecentFilesDescription: 'Oops, forgot to turn off recording?',
       storageDeleteWindow15m: '15 minutes',
       storageDeleteWindow1h: '1 hour',
@@ -83,7 +83,7 @@ const microcopy = {
       storageDeleteWindow7d: '7 days',
       storageDeleteWindowAll: 'all time',
       storageDeleteFiles: 'Delete files',
-      storageImagesRetentionTitle: 'Images retention',
+      storageImagesRetentionTitle: 'Images Retention',
       storageImagesRetentionDescription:
         'Deletes screenshots automatically to save space (markdown files are NOT deleted)',
       storageRetention2d: '2 days',
@@ -187,7 +187,7 @@ const microcopy = {
         title: 'Storage'
       },
       installSkill: {
-        title: 'Install Skill'
+        title: 'Connect Agent'
       }
     },
     stills: {
@@ -296,7 +296,7 @@ const microcopy = {
         failedToOpenClaudeCoworkGuide: 'Failed to open Claude Cowork guide.',
         installing: 'Installing...',
         openedClaudeCoworkGuide: 'Opened Claude Cowork guide.',
-        failedToInstallSkill: 'Failed to install skill.',
+        failedToInstallSkill: 'Failed to connect agent.',
         installedAndFailedTemplate:
           'Installed for {{succeededHarnesses}}. Failed for {{failedHarnesses}}: {{message}}',
         installedAndAdditionalFailureTemplate: 'Installed for {{succeededHarnesses}}. {{message}}',

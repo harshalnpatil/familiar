@@ -16,9 +16,9 @@ export const DEFAULT_MICROCOPY = {
       updates: {
       title: 'Updates'
       },
-      installSkill: {
-        title: 'Install Skill'
-      },
+    installSkill: {
+      title: 'Connect Agent'
+    },
       heartbeats: {
         title: 'Heartbeats'
       }
@@ -111,7 +111,7 @@ export const DEFAULT_MICROCOPY = {
         failedToOpenClaudeCoworkGuide: 'Failed to open Claude Cowork guide.',
         installing: 'Installing...',
         openedClaudeCoworkGuide: 'Opened Claude Cowork guide.',
-        failedToInstallSkill: 'Failed to install skill.',
+        failedToInstallSkill: 'Failed to connect agent.',
         installedAndFailedTemplate:
           'Installed for {{succeededHarnesses}}. Failed for {{failedHarnesses}}: {{message}}',
         installedAndAdditionalFailureTemplate:

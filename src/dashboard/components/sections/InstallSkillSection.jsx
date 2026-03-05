@@ -1,5 +1,9 @@
 import React from 'react'
 
+import { CardTitle } from '../ui/card'
+import { Button } from '../ui/button'
+import { Checkbox } from '../ui/checkbox'
+import { Label } from '../ui/label'
 import { CLOUD_COWORK_GUIDE_URL } from '../dashboard/dashboardConstants'
 
 const skillIcons = {
@@ -60,22 +64,16 @@ export function InstallSkillSection({
     <section className="react-card react-install-tab">
       <div className="react-skill-picker-options">
         {wizardHarnessOptions.map((entry) => (
-          <label key={entry.value} className="react-skill-picker-option">
-            <input
-              type="checkbox"
-              id={`settings-skill-harness-${entry.value}`}
-              name="settings-skill-harness"
-              value={entry.value}
-              className="react-sr-only"
-              checked={selectedSet.has(entry.value)}
-              onChange={handleHarnessChange}
-            />
-            <span
-              className={`react-skill-picker-option-card${selectedSet.has(entry.value) ? ' is-selected' : ''}`}
-            >
-              <span className="react-skill-picker-radio" aria-hidden="true">
-                <span className="react-skill-picker-radio-dot" />
-              </span>
+          <Label key={entry.value} className="react-skill-picker-option">
+            <span className="react-skill-picker-option-card">
+              <Checkbox
+                type="checkbox"
+                id={`settings-skill-harness-${entry.value}`}
+                name="settings-skill-harness"
+                value={entry.value}
+                checked={selectedSet.has(entry.value)}
+                onChange={handleHarnessChange}
+              />
               <span
                 className={`react-skill-picker-icon ${entry.value === 'codex' || entry.value === 'cursor' ? 'react-skill-picker-icon--light-chip' : ''}`}
               >
@@ -92,7 +90,7 @@ export function InstallSkillSection({
                   'Restart Cursor for the skill to take effect.'}
               </span>
             ) : null}
-          </label>
+          </Label>
         ))}
       </div>
 
@@ -117,7 +115,7 @@ export function InstallSkillSection({
       >
         <div className="react-install-guide-card">
           <div className="react-install-guide-title-wrap">
-            <h4>Claude Cowork install guide</h4>
+            <CardTitle>Claude Cowork install guide</CardTitle>
             <p className="react-install-guide-subtitle">Use marketplace installation in Cowork.</p>
           </div>
           <ol className="react-install-guide-steps">
@@ -127,24 +125,26 @@ export function InstallSkillSection({
           </ol>
           <p className="react-inline-status">{CLOUD_COWORK_GUIDE_URL}</p>
           <div className="react-section-actions">
-            <button
+            <Button
               id="settings-cloud-cowork-copy-link"
               className="react-btn"
+              variant="outline"
               type="button"
               onClick={() => {
                 void copyClaudeCoworkGuideLink()
               }}
             >
               Copy Link
-            </button>
-            <button
+            </Button>
+            <Button
               id="settings-cloud-cowork-done"
               className="react-btn react-btn-subtle"
+              variant="outline"
               type="button"
               onClick={hideClaudeCoworkGuide}
             >
               Done
-            </button>
+            </Button>
           </div>
           {toDisplayText(claudeCoworkGuideMessage) ? (
             <p className="react-help-text">{toDisplayText(claudeCoworkGuideMessage)}</p>

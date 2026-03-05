@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { toDisplayText } from './dashboardUtils'
 import dashboardCapturePermissionRules from './dashboardCapturePermissionRules.cjs'
@@ -8,6 +8,17 @@ const {
   resolvePermissionStateFromFamiliar,
   resolvePermissionStateFromResult
 } = dashboardCapturePermissionRules
+
+const isPermissionGrantedFromStatus = (permissionStatus, permissionGranted) => {
+  if (permissionStatus === 'granted' || permissionStatus === 'authorized' || permissionStatus === 'allowed') {
+    return true
+  }
+  if (permissionStatus === 'unavailable') {
+    return true
+  }
+
+  return permissionGranted === true
+}
 
 export const useDashboardCapture = (state) => {
   const {
@@ -21,6 +32,17 @@ export const useDashboardCapture = (state) => {
   } = state
 
   const [permissionCheckState, setPermissionCheckState] = useState('idle')
+  const systemPermissionGranted = isPermissionGrantedFromStatus(
+    recordingStatus.permissionStatus,
+    recordingStatus.permissionGranted
+  )
+
+  useEffect(() => {
+    if (permissionCheckState === 'idle' || permissionCheckState === 'checking') {
+      return
+    }
+    setPermissionCheckState(systemPermissionGranted ? 'granted' : 'denied')
+  }, [systemPermissionGranted, permissionCheckState])
 
   const refreshRecordingStatusSafe = (typeof refreshRecordingStatus === 'function'
     ? refreshRecordingStatus

@@ -52,7 +52,7 @@ test('storage change button sets the context folder path', async () => {
     await expect(window.getByRole('tab', { name: 'Wizard' })).toBeHidden()
     await expect(window.getByRole('tab', { name: 'Capturing' })).toBeVisible()
     await expect(window.getByRole('tab', { name: 'Storage' })).toBeVisible()
-    await expect(window.getByRole('tab', { name: 'Install Skill' })).toBeVisible()
+    await expect(window.getByRole('tab', { name: 'Connect Agent' })).toBeVisible()
     const visibleTabs = (await window.locator('[role="tab"]:visible').allTextContents()).map((tabText) =>
       tabText.trim()
     )

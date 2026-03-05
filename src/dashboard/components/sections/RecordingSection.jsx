@@ -1,4 +1,11 @@
 import React from 'react'
+
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Select } from '../ui/select'
+import { Label } from '../ui/label'
+import { Checkbox } from '../ui/checkbox'
 import { resolveRecordingIndicatorVisuals } from '../dashboard/dashboardUtils'
 
 const LLM_PROVIDER_OPTIONS = [
@@ -80,8 +87,8 @@ export function RecordingSection({
         data-permission-toggle-visibility="always"
         className="space-y-2"
       >
-        <label htmlFor="recording-always-record-when-active" className="relative block w-full cursor-pointer group">
-          <input
+        <Label htmlFor="recording-always-record-when-active" className="relative block w-full cursor-pointer group">
+          <Checkbox
             id="recording-always-record-when-active"
             data-setting="always-record-when-active"
             type="checkbox"
@@ -91,7 +98,7 @@ export function RecordingSection({
               void setAlwaysRecord(event.target.checked)
             }}
           />
-          <div className="wizard-capture-toggle-card rounded-xl border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900 p-4 transition-all duration-300 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 peer-checked:border-indigo-500 peer-checked:bg-indigo-50/40 dark:peer-checked:border-indigo-500/50 dark:peer-checked:bg-indigo-500/10 peer-checked:shadow-sm">
+          <div className="wizard-capture-toggle-card rounded-xl border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900 p-4 transition-all duration-300 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 peer-checked:bg-indigo-50/40 dark:peer-checked:bg-indigo-500/10 peer-checked:shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="wizard-capture-toggle-icon w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 peer-checked:bg-indigo-100 dark:peer-checked:bg-indigo-900/50 peer-checked:border-transparent peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
@@ -102,19 +109,17 @@ export function RecordingSection({
                 </div>
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Capture while active</span>
+                    <span className="text-[14px] font-medium text-zinc-900 dark:text-zinc-100">Capture while active</span>
                     <div
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide ${statusBadgeClasses}`}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[14px] font-medium uppercase tracking-wide ${statusBadgeClasses}`}
+                      hidden={recordingIndicatorStatus !== 'paused'}
                     >
                       <span id="recording-status-dot" className={`w-2 h-2 rounded-full ${recordingDotClass}`} />
                       <span id="recording-status">{recordingStatusText}</span>
                     </div>
                   </div>
-                  <span className="wizard-capture-toggle-subtitle-off text-xs text-zinc-500 dark:text-zinc-400 block peer-checked:hidden transition-opacity">
+                  <span className="wizard-capture-toggle-subtitle-off text-[14px] text-zinc-500 dark:text-zinc-400 block peer-checked:hidden transition-opacity">
                     Action required to proceed.
-                  </span>
-                  <span className="wizard-capture-toggle-subtitle-on text-xs text-indigo-600 dark:text-indigo-400 hidden peer-checked:block transition-opacity">
-                    Capturing is enabled.
                   </span>
                 </div>
               </div>
@@ -123,183 +128,194 @@ export function RecordingSection({
               </div>
             </div>
           </div>
-        </label>
-        <p id="recording-always-record-when-active-error" data-setting-error="always-record-when-active-error" className={`text-xs text-red-600 dark:text-red-400 ${toDisplayText(recordingError) ? '' : 'hidden'}`}>
+        </Label>
+        <p id="recording-always-record-when-active-error" data-setting-error="always-record-when-active-error" className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(recordingError) ? '' : 'hidden'}`}>
           {toDisplayText(recordingError)}
         </p>
         <span
           id="recording-always-record-when-active-status"
           data-setting-status="always-record-when-active-status"
-          className={`text-xs text-emerald-600 dark:text-emerald-400 ${toDisplayText(recordingMessage) ? '' : 'hidden'}`}
+          className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(recordingMessage) ? '' : 'hidden'}`}
           aria-live="polite"
         >
           {toDisplayText(recordingMessage)}
         </span>
       </section>
 
-      <section className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label htmlFor="recording-check-permissions" className="section-label">
-            Permissions
-          </label>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            id="recording-check-permissions"
-            data-action="check-permissions"
-            className={`px-3 py-2 text-xs font-semibold bg-transparent border rounded-lg focus:outline-none transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${checkPermissionsClasses}`}
-            type="button"
-            onClick={() => {
-              void checkPermissions()
-            }}
-            disabled={isCheckingPermissions}
-          >
-            {checkPermissionsLabel}
-          </button>
-          <button
-            id="recording-open-screen-recording-settings"
-            data-action="open-screen-recording-settings"
-            className={`px-3 py-2 text-xs font-semibold bg-white dark:bg-zinc-800 border border-indigo-300 dark:border-indigo-700 rounded-lg text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 focus:outline-none transition-colors cursor-pointer ${isPermissionCheckDenied ? '' : 'hidden'}`}
-            type="button"
-            onClick={openScreenRecordingSettings}
-          >
-            {openScreenRecordingLabel}
-          </button>
-        </div>
-        <p id="recording-open-screen-recording-settings-note" data-open-screen-recording-settings-note className={`text-xs font-semibold text-zinc-500 dark:text-zinc-400 ${isPermissionCheckDenied ? '' : 'hidden'}`}>
-          Enable access to capture while active in Screen Recording settings.
-        </p>
-      </section>
-
-      <section className="space-y-2" data-processing-engine>
-        <div className="space-y-1">
-          <h3 className="section-label">Processing</h3>
-        </div>
-        <div className="flex items-center justify-between">
-          <span id="stills-markdown-extractor-status" data-setting-status="stills-markdown-extractor-status" className={`text-xs text-emerald-600 dark:text-emerald-400 ${toDisplayText(recordingMessage) ? '' : 'hidden'}`} aria-live="polite">
-            {toDisplayText(recordingMessage)}
-          </span>
-        </div>
-        <p id="stills-markdown-extractor-error" data-setting-error="stills-markdown-extractor-error" className={`text-xs text-red-600 dark:text-red-400 ${toDisplayText(recordingError) ? '' : 'hidden'}`}>
-          {toDisplayText(recordingError)}
-        </p>
-        <select id="stills-markdown-extractor" data-setting="stills-markdown-extractor" className="hidden" value={settings.stillsMarkdownExtractorType}>
-          {PROCESSOR_OPTIONS.map((entry) => (
-            <option key={entry.value} value={entry.value}>
-              {entry.label}
-            </option>
-          ))}
-        </select>
-
-        <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <button
-            type="button"
-            data-processing-engine-mode="apple_vision_ocr"
-            className={`py-1.5 text-xs font-medium rounded-md flex items-center justify-center gap-2 transition-colors ${isCloudMode ? 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300' : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'}`}
-            onClick={() => {
-              void persistExtractor('apple_vision_ocr')
-            }}
-          >
-            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <rect x="6" y="11" width="12" height="10" rx="2" />
-              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-            </svg>
-            Apple Vision OCR (local)
-          </button>
-          <button
-            type="button"
-            data-processing-engine-mode="llm"
-            className={`py-1.5 text-xs font-medium rounded-md flex items-center justify-center gap-2 transition-colors ${isCloudMode ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
-            onClick={() => {
-              void persistExtractor('llm')
-            }}
-          >
-            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path d="M20 17.5a4.5 4.5 0 0 0-3.2-4.3A6 6 0 0 0 5 14a3.5 3.5 0 0 0 .5 7H18a3 3 0 0 0 2-3.5Z" />
-            </svg>
-            LLM (cloud)
-          </button>
-        </div>
-
-        <div className={`space-y-3 pt-1 ${isCloudMode ? '' : 'hidden'}`} data-processing-engine-panel="llm">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Use LLM OCR for richer markdown output.
-          </p>
-          <div className="space-y-2">
-            <label className="section-label">LLM provider</label>
-            <select
-              id="llm-provider"
-              data-setting="llm-provider"
-              className="input-ring w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-xs font-medium text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
-              value={settings.llmProviderName}
-              onChange={(event) => {
-                void persistProvider(event.target.value)
+      <Card>
+        <CardHeader>
+          <CardTitle>Permissions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              id="recording-check-permissions"
+              data-action="check-permissions"
+              variant="outline"
+              size="sm"
+              className={checkPermissionsClasses}
+              disabled={isCheckingPermissions}
+              onClick={() => {
+                void checkPermissions()
               }}
             >
-              {LLM_PROVIDER_OPTIONS.map((entry) => (
-                <option key={entry.value} value={entry.value}>
-                  {entry.label}
-                </option>
-              ))}
-            </select>
-            <p id="llm-provider-error" data-setting-error="llm-provider-error" className="text-xs text-red-600 dark:text-red-400 hidden">
-              {toDisplayText(recordingError)}
-            </p>
+              {checkPermissionsLabel}
+            </Button>
+            <Button
+              id="recording-open-screen-recording-settings"
+              data-action="open-screen-recording-settings"
+              variant="outline"
+              size="sm"
+              hidden={!isPermissionCheckDenied}
+              onClick={openScreenRecordingSettings}
+            >
+              {openScreenRecordingLabel}
+            </Button>
           </div>
-          <div className="space-y-2">
-            <label htmlFor="llm-api-key" className="section-label">LLM API key</label>
-            <div className="relative w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
-              <svg viewBox="0 0 24 24" className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                <path d="M14.5 10.5a3.5 3.5 0 1 0-7 0 3.5 3.5 0 0 0 7 0Z" />
-                <path d="M12 14v3m0 0h6m-6 0l2 2m-2-2l2-2" />
-              </svg>
-              <input
-                id="llm-api-key"
-                data-setting="llm-api-key"
-                className="w-full bg-transparent text-xs text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none py-2 pl-8 pr-3"
-                type="password"
-                value={pendingApiKey}
-                onChange={(event) => {
-                  setPendingApiKey(event.target.value)
-                }}
-                onBlur={() => {
-                  void saveLlmApiKey(pendingApiKey)
-                }}
-                placeholder={isPathSet ? 'Saved key' : 'Not set'}
-              />
-            </div>
-            <p id="llm-api-key-error" data-setting-error="llm-api-key-error" className="text-xs text-red-600 dark:text-red-400 hidden">
-              {toDisplayText(recordingError)}
-            </p>
-            <span id="llm-api-key-status" data-setting-status="llm-api-key-status" className={`text-xs text-emerald-600 dark:text-emerald-400 ${toDisplayText(recordingMessage) ? '' : 'hidden'}`} aria-live="polite">
+          <p
+            id="recording-open-screen-recording-settings-note"
+            data-open-screen-recording-settings-note
+            className="text-[14px] font-semibold text-zinc-500 dark:text-zinc-400"
+            hidden={!isPermissionCheckDenied}
+          >
+            Enable access to capture while active in Screen Recording settings.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card data-processing-engine>
+        <CardHeader>
+          <CardTitle>Processing</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span id="stills-markdown-extractor-status" data-setting-status="stills-markdown-extractor-status" className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(recordingMessage) ? '' : 'hidden'}`} aria-live="polite">
               {toDisplayText(recordingMessage)}
             </span>
           </div>
-        </div>
-
-        <div className={`space-y-2 pt-1 ${isCloudMode ? 'hidden' : ''}`} data-processing-engine-panel="apple_vision_ocr">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Local OCR runs on-device and keeps captures private.
+          <p id="stills-markdown-extractor-error" data-setting-error="stills-markdown-extractor-error" className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(recordingError) ? '' : 'hidden'}`}>
+            {toDisplayText(recordingError)}
           </p>
-        </div>
-      </section>
+          <Select id="stills-markdown-extractor" data-setting="stills-markdown-extractor" className="hidden" value={settings.stillsMarkdownExtractorType}>
+            {PROCESSOR_OPTIONS.map((entry) => (
+              <option key={entry.value} value={entry.value}>
+                {entry.label}
+              </option>
+            ))}
+          </Select>
+
+          <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
+            <Button
+              type="button"
+              data-processing-engine-mode="apple_vision_ocr"
+              variant="ghost"
+              className={`py-1.5 text-[14px] font-medium rounded-md flex items-center justify-center gap-2 transition-colors ${isCloudMode ? 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300' : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'}`}
+              onClick={() => {
+                void persistExtractor('apple_vision_ocr')
+              }}
+            >
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <rect x="6" y="11" width="12" height="10" rx="2" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+              Apple Vision OCR (local)
+            </Button>
+            <Button
+              type="button"
+              data-processing-engine-mode="llm"
+              variant="ghost"
+              className={`py-1.5 text-[14px] font-medium rounded-md flex items-center justify-center gap-2 transition-colors ${isCloudMode ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+              onClick={() => {
+                void persistExtractor('llm')
+              }}
+            >
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M20 17.5a4.5 4.5 0 0 0-3.2-4.3A6 6 0 0 0 5 14a3.5 3.5 0 0 0 .5 7H18a3 3 0 0 0 2-3.5Z" />
+              </svg>
+              LLM (cloud)
+            </Button>
+          </div>
+
+          <div className={`space-y-3 pt-1 ${isCloudMode ? '' : 'hidden'}`} data-processing-engine-panel="llm">
+            <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
+              Use LLM OCR for richer markdown output.
+            </p>
+            <div className="space-y-2">
+              <Label className="section-label">LLM provider</Label>
+              <Select
+                id="llm-provider"
+                data-setting="llm-provider"
+                className="input-ring w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-[14px] font-medium text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
+                value={settings.llmProviderName}
+                onChange={(event) => {
+                  void persistProvider(event.target.value)
+                }}
+              >
+                {LLM_PROVIDER_OPTIONS.map((entry) => (
+                  <option key={entry.value} value={entry.value}>
+                    {entry.label}
+                  </option>
+                ))}
+              </Select>
+              <p id="llm-provider-error" data-setting-error="llm-provider-error" className="text-[14px] text-red-600 dark:text-red-400 hidden">
+                {toDisplayText(recordingError)}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="llm-api-key" className="section-label">LLM API key</Label>
+              <div className="relative w-full">
+                <svg viewBox="0 0 24 24" className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path d="M14.5 10.5a3.5 3.5 0 1 0-7 0 3.5 3.5 0 0 0 7 0Z" />
+                  <path d="M12 14v3m0 0h6m-6 0l2 2m-2-2l2-2" />
+                </svg>
+                <Input
+                  id="llm-api-key"
+                  data-setting="llm-api-key"
+                  className="pl-8"
+                  type="password"
+                  value={pendingApiKey}
+                  onChange={(event) => {
+                    setPendingApiKey(event.target.value)
+                  }}
+                  onBlur={() => {
+                    void saveLlmApiKey(pendingApiKey)
+                  }}
+                  placeholder={isPathSet ? 'Saved key' : 'Not set'}
+                />
+              </div>
+              <p id="llm-api-key-error" data-setting-error="llm-api-key-error" className="text-[14px] text-red-600 dark:text-red-400 hidden">
+                {toDisplayText(recordingError)}
+              </p>
+              <span id="llm-api-key-status" data-setting-status="llm-api-key-status" className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(recordingMessage) ? '' : 'hidden'}`} aria-live="polite">
+                {toDisplayText(recordingMessage)}
+              </span>
+            </div>
+          </div>
+
+          <div className={`space-y-2 pt-1 ${isCloudMode ? 'hidden' : ''}`} data-processing-engine-panel="apple_vision_ocr">
+            <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
+              Local OCR runs on-device and keeps captures private.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="w-full border-t border-zinc-200 dark:border-zinc-800 flex flex-col items-start gap-1 mt-auto pt-4">
-        <button
+        <Button
           id="copy-debug-log"
-          className="px-3 py-1.5 text-xs font-medium bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          type="button"
+          variant="outline"
+          size="sm"
           onClick={() => {
             void copyDebugLog()
           }}
           disabled={copyLogBusy}
         >
           {mc.dashboard.settingsActions.copyLog}
-        </button>
-        <span id="copy-log-status" data-setting-status="copy-log-status" className={`text-xs text-emerald-600 dark:text-emerald-400 ${toDisplayText(copyLogMessage) ? '' : 'hidden'}`} aria-live="polite">
+        </Button>
+        <span id="copy-log-status" data-setting-status="copy-log-status" className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(copyLogMessage) ? '' : 'hidden'}`} aria-live="polite">
           {toDisplayText(copyLogMessage)}
         </span>
-        <span id="copy-log-error" data-setting-error="copy-log-error" className={`text-xs text-red-600 dark:text-red-400 ${toDisplayText(copyLogError) ? '' : 'hidden'}`} role="alert" aria-live="polite">
+        <span id="copy-log-error" data-setting-error="copy-log-error" className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(copyLogError) ? '' : 'hidden'}`} role="alert" aria-live="polite">
           {toDisplayText(copyLogError)}
         </span>
       </div>

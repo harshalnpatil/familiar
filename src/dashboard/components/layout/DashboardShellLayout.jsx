@@ -1,5 +1,16 @@
 import React from 'react'
 
+import { Button } from '../ui/button'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem
+} from '../ui/sidebar'
+
 export function DashboardShellLayout({
   activeSection,
   children,
@@ -30,8 +41,8 @@ export function DashboardShellLayout({
     storage: 'Storage',
     heartbeats: 'Heartbeats',
     recording: 'Capturing',
-    'install-skill': 'Install Skill',
-    installSkill: 'Install Skill'
+    'install-skill': 'Connect Agent',
+    installSkill: 'Connect Agent'
   }[activeSection] || 'Storage'
 
   const renderSectionIcon = (id) => {
@@ -76,62 +87,66 @@ export function DashboardShellLayout({
 
   return (
     <div className="relative h-full min-h-screen w-full flex">
-      <aside
+      <Sidebar
         id="settings-sidebar"
-        className={`w-[190px] h-full flex-none bg-zinc-50/90 dark:bg-zinc-900/60 border-r border-zinc-200 dark:border-zinc-800 flex flex-col pt-3 pb-3 ${
-          isWizardCompleted ? '' : 'hidden'
-        }`}
+        className={isWizardCompleted ? '' : 'hidden'}
       >
-        <div className="px-4 mb-4 flex items-center gap-2">
+        <SidebarHeader>
           <img src="../icon.png" alt="" className="w-5 h-5 rounded-md object-cover shadow-sm" />
           <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">{appLabel}</span>
           <span id="app-version" className="text-xs font-medium text-zinc-500 dark:text-zinc-400" aria-label="" />
-        </div>
+        </SidebarHeader>
 
-        <nav className="flex-1 min-h-0 px-2 space-y-1 overflow-y-auto" role="tablist" aria-label="">
-          {navigation.map((entry) => {
-            const isHidden = isWizardCompleted && entry.id === 'wizard'
-            return (
-              <button
-                key={entry.id}
-                data-section-target={entry.id}
-                data-active={activeSection === entry.id ? 'true' : 'false'}
-                aria-controls={`section-${entry.id}`}
-                aria-selected={activeSection === entry.id}
-                role="tab"
-                type="button"
-                className="sidebar-item"
-                onClick={() => {
-                  onSectionSelect(entry.id)
-                }}
-                hidden={isHidden}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  aria-hidden="true"
-                >
-                  {renderSectionIcon(entry.id)}
-                </svg>
-                {entry.label}
-              </button>
-            )
-          })}
-        </nav>
+        <SidebarContent>
+          <nav role="tablist" aria-label="">
+            <SidebarMenu>
+              {navigation.map((entry) => {
+                const isHidden = isWizardCompleted && entry.id === 'wizard'
+                return (
+                  <SidebarMenuItem key={entry.id}>
+                    <SidebarMenuButton
+                      data-section-target={entry.id}
+                      aria-controls={`section-${entry.id}`}
+                      aria-selected={activeSection === entry.id}
+                      role="tab"
+                      type="button"
+                      isActive={activeSection === entry.id}
+                      onClick={() => {
+                        onSectionSelect(entry.id)
+                      }}
+                      hidden={isHidden}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        aria-hidden="true"
+                      >
+                        {renderSectionIcon(entry.id)}
+                      </svg>
+                      {entry.label}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </nav>
+        </SidebarContent>
 
-        <div className="px-3 mt-auto">
-          <button
+        <SidebarFooter>
+          <Button
             id="updates-sidebar-check"
             data-action="updates-check"
             type="button"
+            variant="outline"
             onClick={onCheckForUpdates}
             disabled={Boolean(isCheckingForUpdates)}
-            className="w-full px-3 py-2 text-xs font-semibold bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full text-xs font-semibold"
           >
             {updatesCheckForUpdatesLabel || 'Check for updates'}
-          </button>
+          </Button>
           <span
             id="updates-sidebar-status"
             data-setting-status="updates-status"
@@ -168,8 +183,8 @@ export function DashboardShellLayout({
           >
             {updatesErrorText}
           </p>
-        </div>
-      </aside>
+        </SidebarFooter>
+      </Sidebar>
 
       <main className="flex-1 flex flex-col min-h-0 h-full bg-white dark:bg-[#111]">
         <h1 id="section-title" className="sr-only">

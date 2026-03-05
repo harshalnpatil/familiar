@@ -1,5 +1,15 @@
 import React, { useMemo, useState } from 'react'
 
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
+import { ButtonGroup } from '../ui/button-group'
+import { Card, CardFooter, CardTitle } from '../ui/card'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Select } from '../ui/select'
+import { Checkbox } from '../ui/checkbox'
+import { Textarea } from '../ui/textarea'
+
 import {
   HEARTBEAT_DEFAULT_TIMEZONE,
   HEARTBEAT_FREQUENCIES,
@@ -229,105 +239,97 @@ export function HeartbeatsSection({
 
   return (
     <section id="section-heartbeats" className="space-y-5 max-w-[680px]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Heartbeats</h1>
-        </div>
+      <div className="flex items-start justify-end gap-3">
         <div className="flex gap-2">
-          <button
+          <Button
             id="heartbeats-open-folder"
-            type="button"
             onClick={onOpenFolder}
             disabled={!hasContextFolder}
-            className="px-3 py-2 text-xs font-semibold bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+            variant="outline"
+            size="sm"
+            >
             Open Heartbeats Folder
-          </button>
-          <button
+          </Button>
+          <Button
             id="heartbeats-add"
-            type="button"
+            variant="default"
+            size="sm"
             onClick={openNewForm}
-            className="px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
           >
             + Add Heartbeat
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className={`text-xs ${toDisplayText(heartbeatMessage) ? '' : 'hidden'}`}>
+      <div className={`text-[14px] ${toDisplayText(heartbeatMessage) ? '' : 'hidden'}`}>
         <span className="text-emerald-600 dark:text-emerald-400">{toDisplayText(heartbeatMessage)}</span>
       </div>
-      <p className={`text-xs text-red-600 dark:text-red-400 ${toDisplayText(heartbeatError) ? '' : 'hidden'}`}>
+      <p className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(heartbeatError) ? '' : 'hidden'}`}>
         {toDisplayText(heartbeatError)}
       </p>
 
       {heartbeatItems.length === 0 ? (
-        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="text-[14px] text-zinc-500 dark:text-zinc-400">
           No heartbeats yet. Set one up to turn raw context into periodic insights.
         </div>
       ) : (
         <div className="space-y-2">
-          {heartbeatItems.map((entry) => (
-            <div
-              key={entry.id || `heartbeat-${entry.topic}`}
-              className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1 min-w-0">
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    {entry.topic || 'Unnamed heartbeat'}
-                  </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-[460px]">
-                    {entry.prompt || ''}
-                  </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {resolveRunnerLabel(entry.runner)}
-                    {' '}
-                    ·
-                    {' '}
-                    {resolveFrequencyLabel(entry.schedule?.frequency)}
-                    {entry.schedule?.frequency === 'weekly'
-                      ? ` · ${resolveDayLabel(entry.schedule?.dayOfWeek, weekdayLookup)}`
-                      : ''}
-                    {' '}
-                    ·
-                    {' '}
-                    {entry.schedule?.time || '09:00'}
-                    {' '}
-                    ·
-                    {' '}
-                    {entry.schedule?.timezone || HEARTBEAT_DEFAULT_TIMEZONE}
-                  </p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {runningHeartbeatIds?.[entry.id] ? (
-                      <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="w-3 h-3 animate-spin"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M16.9 16.9l2.1 2.1M2 12h3M19 12h3M4.9 19.1l2.1-2.1M16.9 7.1l2.1-2.1"
-                          />
-                        </svg>
-                        Running
-                      </span>
-                    ) : (
-                      resolveLastRunText(entry, toDisplayText)
-                    )}
-                  </p>
-                  {entry.lastRunError ? (
-                    <p className="text-[11px] text-red-500 dark:text-red-400" title={entry.lastRunError}>
-                      {entry.lastRunError}
+          {heartbeatItems.map((entry) => {
+            const frequencyLabel = resolveFrequencyLabel(entry.schedule?.frequency)
+            const dayLabel =
+              entry.schedule?.frequency === 'weekly'
+                ? resolveDayLabel(entry.schedule?.dayOfWeek, weekdayLookup)
+                : ''
+            const metadata = [
+              resolveRunnerLabel(entry.runner),
+              dayLabel ? `${frequencyLabel} · ${dayLabel}` : frequencyLabel,
+              entry.schedule?.time || '09:00',
+              entry.schedule?.timezone || HEARTBEAT_DEFAULT_TIMEZONE
+            ]
+            return (
+              <Card
+                key={entry.id || `heartbeat-${entry.topic}`}
+                className="p-0"
+              >
+                <div className="p-3 flex items-start justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-[14px] font-semibold text-zinc-900 dark:text-zinc-100">
+                      {entry.topic || 'Unnamed heartbeat'}
                     </p>
-                  ) : null}
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <label className="inline-flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
-                    <input
+                    <div className="flex flex-wrap gap-1.5">
+                      {metadata.map((label) => (
+                        <Badge key={`${entry.id || entry.topic}-${label}`}>{label}</Badge>
+                      ))}
+                    </div>
+                    <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
+                      {runningHeartbeatIds?.[entry.id] ? (
+                        <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="w-3 h-3 animate-spin"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M16.9 16.9l2.1 2.1M2 12h3M19 12h3M4.9 19.1l2.1-2.1M16.9 7.1l2.1-2.1"
+                            />
+                          </svg>
+                          Running
+                        </span>
+                      ) : (
+                        resolveLastRunText(entry, toDisplayText)
+                      )}
+                    </p>
+                    {entry.lastRunError ? (
+                      <p className="text-[14px] text-red-500 dark:text-red-400" title={entry.lastRunError}>
+                        {entry.lastRunError}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Label className="inline-flex items-center gap-2 text-[14px] text-zinc-600 dark:text-zinc-300">
+                    <Checkbox
                       type="checkbox"
                       className="h-3.5 w-3.5 accent-indigo-600 dark:accent-indigo-400"
                       checked={entry.enabled !== false}
@@ -338,78 +340,85 @@ export function HeartbeatsSection({
                       }}
                     />
                     Enabled
-                  </label>
-                  <button
-                    id={`heartbeats-run-${entry.id || 'anonymous'}`}
-                    type="button"
-                    onClick={() => {
-                      onRunNow(entry.id)
-                    }}
-                    disabled={!entry.id || !hasContextFolder || Boolean(runningHeartbeatIds?.[entry.id])}
-                    className="px-2 py-1 text-[11px] font-semibold bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Run now
-                  </button>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        openEditForm(entry)
-                      }}
-                      className="px-2 py-1 text-[11px] font-semibold bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        openDuplicateForm(entry)
-                      }}
-                      className="px-2 py-1 text-[11px] font-semibold bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                    >
-                      Duplicate
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void onDelete(entry.id)
-                      }}
-                      disabled={Boolean(runningHeartbeatIds?.[entry.id])}
-                      className="px-2 py-1 text-[11px] font-semibold bg-white dark:bg-zinc-800 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  </Label>
                 </div>
-              </div>
-            </div>
-          ))}
+                <CardFooter className="px-3 pb-3 pt-2 flex flex-wrap items-center justify-between gap-2">
+                  <ButtonGroup>
+                    <Button
+                      id={`heartbeats-run-${entry.id || 'anonymous'}`}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        onRunNow(entry.id)
+                      }}
+                      disabled={!entry.id || !hasContextFolder || Boolean(runningHeartbeatIds?.[entry.id])}
+                    >
+                      Run now
+                    </Button>
+                  </ButtonGroup>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ButtonGroup>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          openEditForm(entry)
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          openDuplicateForm(entry)
+                        }}
+                      >
+                        Duplicate
+                      </Button>
+                    </ButtonGroup>
+                    <ButtonGroup>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          void onDelete(entry.id)
+                        }}
+                        disabled={Boolean(runningHeartbeatIds?.[entry.id])}
+                      >
+                        Delete
+                      </Button>
+                    </ButtonGroup>
+                  </div>
+                </CardFooter>
+              </Card>
+            )
+          })}
         </div>
       )}
 
       {isFormOpen ? (
         <section className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-4">
-          <h2 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <CardTitle>
             {editingId ? 'Edit Heartbeat' : 'New Heartbeat'}
-          </h2>
+          </CardTitle>
           <div className="space-y-3">
-            <label htmlFor="heartbeat-topic" className="section-label">
+            <Label htmlFor="heartbeat-topic" className="section-label">
               Topic
-            </label>
-            <input
+            </Label>
+            <Input
               id="heartbeat-topic"
-              className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-xs"
               value={draft.topic}
               onChange={(event) => {
                 setDraft((previous) => ({ ...previous, topic: event.target.value }))
               }}
             />
-            <label htmlFor="heartbeat-prompt" className="section-label">
+            <Label htmlFor="heartbeat-prompt" className="section-label">
               Prompt
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               id="heartbeat-prompt"
-              className="input-ring w-full min-h-24 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-xs"
+              className="min-h-24"
               value={draft.prompt}
               onChange={(event) => {
                 setDraft((previous) => ({ ...previous, prompt: event.target.value }))
@@ -418,10 +427,12 @@ export function HeartbeatsSection({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label htmlFor="heartbeat-runner" className="section-label">Runner</label>
-                <select
+                <Label htmlFor="heartbeat-runner" className="section-label">
+                  Runner
+                </Label>
+                <Select
                   id="heartbeat-runner"
-                  className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-xs"
+                  className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-[14px]"
                   value={draft.runner}
                   onChange={(event) => {
                     setDraft((previous) => ({ ...previous, runner: event.target.value }))
@@ -432,13 +443,15 @@ export function HeartbeatsSection({
                       {getLabel(mc?.dashboard?.heartbeats, entry, entry.label)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div className="space-y-1">
-                <label htmlFor="heartbeat-frequency" className="section-label">Frequency</label>
-                <select
+                <Label htmlFor="heartbeat-frequency" className="section-label">
+                  Frequency
+                </Label>
+                <Select
                   id="heartbeat-frequency"
-                  className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-xs"
+                  className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-[14px]"
                   value={draft.frequency}
                   onChange={(event) => {
                     setDraft((previous) => ({ ...previous, frequency: event.target.value }))
@@ -449,16 +462,15 @@ export function HeartbeatsSection({
                       {getLabel(mc?.dashboard?.heartbeats, entry, entry.label)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label htmlFor="heartbeat-time" className="section-label">Time</label>
-                <input
+                <Label htmlFor="heartbeat-time" className="section-label">Time</Label>
+                <Input
                   id="heartbeat-time"
-                  className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-xs"
                   type="time"
                   value={draft.time}
                   onChange={(event) => {
@@ -468,10 +480,12 @@ export function HeartbeatsSection({
               </div>
               {isWeekly ? (
                 <div className="space-y-1">
-                  <label htmlFor="heartbeat-day-of-week" className="section-label">Day of week</label>
-                  <select
+                  <Label htmlFor="heartbeat-day-of-week" className="section-label">
+                    Day of week
+                  </Label>
+                  <Select
                     id="heartbeat-day-of-week"
-                    className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-xs"
+                    className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-[14px]"
                     value={draft.dayOfWeek}
                     onChange={(event) => {
                       setDraft((previous) => ({ ...previous, dayOfWeek: event.target.value }))
@@ -482,7 +496,7 @@ export function HeartbeatsSection({
                         {entry.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               ) : (
                 <div />
@@ -490,10 +504,10 @@ export function HeartbeatsSection({
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="heartbeat-timezone" className="section-label">Timezone</label>
-              <select
+              <Label htmlFor="heartbeat-timezone" className="section-label">Timezone</Label>
+              <Select
                 id="heartbeat-timezone"
-                className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-xs"
+                className="input-ring w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2 px-3 text-[14px]"
                 value={draft.timezone}
                 onChange={(event) => {
                   setDraft((previous) => ({ ...previous, timezone: event.target.value }))
@@ -504,11 +518,11 @@ export function HeartbeatsSection({
                     {entry}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
-            <label className="inline-flex items-center gap-2">
-              <input
+            <Label className="inline-flex items-center gap-2">
+              <Checkbox
                 type="checkbox"
                 className="h-4 w-4 accent-indigo-600 dark:accent-indigo-400"
                 checked={draft.enabled}
@@ -517,35 +531,37 @@ export function HeartbeatsSection({
                 }}
               />
               Enabled
-            </label>
+            </Label>
 
             {formError ? (
-              <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+              <p className="text-[14px] text-red-600 dark:text-red-400" role="alert">
                 {formError}
               </p>
             ) : null}
 
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 id="heartbeat-save"
                 type="button"
-                className="px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="default"
+                size="sm"
+                disabled={isFormSubmitting}
                 onClick={() => {
                   void save()
                 }}
-                disabled={isFormSubmitting}
               >
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 id="heartbeat-cancel"
                 type="button"
-                className="px-3 py-2 text-xs font-semibold bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                variant="outline"
+                size="sm"
                 onClick={closeForm}
                 disabled={isFormSubmitting}
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         </section>
