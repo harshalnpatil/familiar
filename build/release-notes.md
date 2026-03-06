@@ -1,3 +1,4 @@
 # Changes
 
-- Ported the desktop settings/dashboard interface from the previous vanilla JS bootstrap implementation to a React-based interface.
+- removed option to define cloud providers for image to text extraction
+- UI polishing
