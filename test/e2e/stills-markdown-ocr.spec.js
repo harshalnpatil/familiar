@@ -196,22 +196,20 @@ test('stills markdown worker uses local Apple Vision OCR helper (native binary)'
   }
 })
 
-test('stills markdown worker redacts secrets in mocked LLM output before persisting', async () => {
+test('stills markdown worker redacts secrets in local OCR output before persisting', async () => {
+  if (process.platform !== 'darwin') {
+    test.skip(true, 'Apple Vision OCR is only supported on macOS.')
+  }
+
   const contextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-context-stills-redaction-'))
   const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-stills-redaction-'))
+  const stubBinaryPath = path.join(os.tmpdir(), `familiar-ocr-redaction-stub-${Date.now()}.js`)
   fs.writeFileSync(
     path.join(settingsDir, 'settings.json'),
     JSON.stringify(
       {
         wizardCompleted: true,
-        contextFolderPath: contextPath,
-        stills_markdown_extractor: {
-          type: 'llm',
-          llm_provider: {
-            provider: 'openai',
-            api_key: 'test'
-          }
-        }
+        contextFolderPath: contextPath
       },
       null,
       2
@@ -219,15 +217,32 @@ test('stills markdown worker redacts secrets in mocked LLM output before persist
     'utf-8'
   )
 
-  const mockText = [
-    'format: familiar-layout-v0',
-    'extractor: llm-mock',
-    '# OCR',
-    'Authorization: Bearer abcdefghijklmnopqrstuvwxyz012345',
-    'api_key = "abcDEF1234567890XYZ_+-/="',
-    'password = "mysecretpass"',
-    'openai=sk-abcdefghijklmnopqrstuvwxyz123456'
-  ].join('\n')
+  fs.writeFileSync(
+    stubBinaryPath,
+    [
+      '#!/usr/bin/env node',
+      'const payload = {',
+      '  meta: {',
+      '    image_width: 64,',
+      '    image_height: 64,',
+      "    level: 'accurate',",
+      '    languages: [],',
+      '    uses_language_correction: true,',
+      '    min_confidence: 0',
+      '  },',
+      '  lines: [',
+      "    'Authorization: Bearer abcdefghijklmnopqrstuvwxyz012345',",
+      "    'api_key = abcDEF1234567890XYZ_+-/=',",
+      "    'password = mysecretpass',",
+      "    'openai=sk-abcdefghijklmnopqrstuvwxyz123456'",
+      '  ]',
+      '};',
+      'process.stdout.write(JSON.stringify(payload));',
+      ''
+    ].join('\n'),
+    'utf-8'
+  )
+  fs.chmodSync(stubBinaryPath, 0o755)
 
   const sessionId = `session-e2e-redaction-${Date.now()}`
   const capturedAt = new Date().toISOString()
@@ -239,8 +254,7 @@ test('stills markdown worker redacts secrets in mocked LLM output before persist
     contextPath,
     settingsDir,
     env: {
-      FAMILIAR_LLM_MOCK: '1',
-      FAMILIAR_LLM_MOCK_TEXT: mockText,
+      FAMILIAR_APPLE_VISION_OCR_BINARY: stubBinaryPath,
       FAMILIAR_E2E_OCR_SESSION_ID: sessionId,
       FAMILIAR_E2E_OCR_CAPTURED_AT: capturedAt,
       FAMILIAR_E2E_OCR_FILE_BASE: fileBase
@@ -328,8 +342,8 @@ test('stills markdown worker redacts secrets in mocked LLM output before persist
 
     const markdown = fs.readFileSync(expectedMarkdownPath, 'utf-8')
     expect(markdown).toContain('[REDACTED:auth_bearer]')
-    expect(markdown).toContain('api_key = "[REDACTED:generic_api_assignment]"')
-    expect(markdown).toContain('password = "[REDACTED:password_assignment]"')
+    expect(markdown).toContain('api_key = [REDACTED:generic_api_assignment]')
+    expect(markdown).toContain('password = [REDACTED:password_assignment]')
     expect(markdown).toContain('[REDACTED:openai_sk]')
     expect(markdown).not.toContain('Bearer abcdefghijklmnopqrstuvwxyz012345')
     expect(markdown).not.toContain('abcDEF1234567890XYZ_+-/=')
@@ -344,5 +358,6 @@ test('stills markdown worker redacts secrets in mocked LLM output before persist
       global.__familiarE2EStillsMarkdownWorker = null
     })
     await electronApp.close()
+    fs.rmSync(stubBinaryPath, { force: true })
   }
 })

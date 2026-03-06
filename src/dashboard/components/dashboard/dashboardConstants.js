@@ -36,11 +36,7 @@ export const DEFAULT_MICROCOPY = {
       errors: {
         failedToSaveSettings: 'Failed to save settings.',
         failedToSaveSetting: 'Failed to save setting.',
-        failedToSaveLlmKey: 'Failed to save LLM key.',
-        failedToSaveLlmProvider: 'Failed to save LLM provider.',
-        failedToSaveStillsMarkdownExtractor: 'Failed to save setting.',
         failedToLoadSettings: 'Failed to load settings.',
-        selectLlmProvider: 'Select an LLM provider.',
         bridgeUnavailableRestart: 'Settings bridge unavailable. Restart the app.',
         failedToOpenFolderPicker: 'Failed to open folder picker.',
         failedToMoveContextFolder: 'Failed to move context folder.',
@@ -127,11 +123,7 @@ export const DEFAULT_MICROCOPY = {
         errors: {
           failedToSaveSettings: 'Failed to save settings.',
           failedToSaveSetting: 'Failed to save setting.',
-          failedToSaveLlmKey: 'Failed to save LLM key.',
-          failedToSaveLlmProvider: 'Failed to save LLM provider.',
-          failedToSaveStillsMarkdownExtractor: 'Failed to save setting.',
           failedToLoadSettings: 'Failed to load settings.',
-          selectLlmProvider: 'Select an LLM provider.',
           bridgeUnavailableRestart: 'Settings bridge unavailable. Restart the app.',
           failedToOpenFolderPicker: 'Failed to open folder picker.',
           failedToMoveContextFolder: 'Failed to move context folder.',
@@ -172,9 +164,6 @@ export const CLOUD_COWORK_GUIDE_URL =
 export const DEFAULT_SETTINGS = {
   appVersion: '',
   contextFolderPath: '',
-  llmProviderName: '',
-  llmProviderApiKey: '',
-  stillsMarkdownExtractorType: 'apple_vision_ocr',
   alwaysRecordWhenActive: false,
   storageAutoCleanupRetentionDays: 2,
   wizardCompleted: false,

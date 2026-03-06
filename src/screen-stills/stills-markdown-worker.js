@@ -6,8 +6,6 @@ const { scanAndRedactContent } = require('../security/rg-redaction')
 const { RetryableError } = require('../utils/retry')
 const { createStillsQueue } = require('./stills-queue')
 const { createStillsMarkdownExtractor } = require('./stills-markdown-extractor')
-const { buildBatchPrompt, parseBatchResponse } = require('./stills-markdown-format')
-const { readImageAsBase64, inferMimeType } = require('../utils/image')
 const {
   FAMILIAR_BEHIND_THE_SCENES_DIR_NAME,
   STILLS_DIR_NAME,
@@ -99,9 +97,7 @@ const createStillsMarkdownWorker = ({
   createExtractorImpl = createStillsMarkdownExtractor,
   writeMarkdownFileImpl = writeMarkdownFile,
   scanAndRedactContentImpl = scanAndRedactContent,
-  onRedactionWarning = noop,
-  readImageAsBase64Impl = readImageAsBase64,
-  inferMimeTypeImpl = inferMimeType
+  onRedactionWarning = noop
 } = {}) => {
   let running = false
   let contextFolderPath = ''
@@ -241,9 +237,7 @@ const createStillsMarkdownWorker = ({
       const extractor = createExtractorImpl({
         settings,
         logger,
-        isOnlineImpl,
-        readImageAsBase64Impl,
-        inferMimeTypeImpl
+        isOnlineImpl
       })
 
       const canRun = await extractor.canRun({ contextFolderPath })
@@ -315,8 +309,6 @@ const createStillsMarkdownWorker = ({
 }
 
 module.exports = {
-  buildBatchPrompt,
-  parseBatchResponse,
   resolveMarkdownPath,
   writeMarkdownFile,
   createStillsMarkdownWorker

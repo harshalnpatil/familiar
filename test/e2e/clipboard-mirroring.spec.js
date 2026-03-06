@@ -189,11 +189,14 @@ test.describe('clipboard mirroring', () => {
   })
 
   test('mirrors clipboard image into stills session and writes .clipboard markdown output', async () => {
+    test.skip(process.platform !== 'darwin', 'Clipboard image OCR is only supported on macOS.')
+
     const appRoot = path.join(__dirname, '../..')
     const sourceContextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-context-source-'))
     fs.mkdirSync(path.join(sourceContextPath, 'familiar'), { recursive: true })
     const contextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-context-clipboard-image-'))
     const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-e2e-'))
+    const clipboardImagePath = path.join(os.tmpdir(), `familiar-clipboard-image-${Date.now()}.png`)
     fs.writeFileSync(
       path.join(settingsDir, 'settings.json'),
       JSON.stringify(
@@ -213,9 +216,8 @@ test.describe('clipboard mirroring', () => {
         ...process.env,
         FAMILIAR_E2E: '1',
         FAMILIAR_E2E_CONTEXT_PATH: contextPath,
-        FAMILIAR_SETTINGS_DIR: settingsDir,
-        FAMILIAR_LLM_MOCK: '1',
-        FAMILIAR_LLM_MOCK_TEXT: 'mock-image-markdown'
+        FAMILIAR_E2E_CLIPBOARD_IMAGE_PATH: clipboardImagePath,
+        FAMILIAR_SETTINGS_DIR: settingsDir
       }
     })
 
@@ -240,11 +242,7 @@ test.describe('clipboard mirroring', () => {
       await expect(window.locator('#context-folder-status')).toHaveText('Saved.')
 
       const extractorResult = await window.evaluate(() =>
-        window.familiar.saveSettings({
-          stillsMarkdownExtractorType: 'llm',
-          llmProviderName: 'openai',
-          alwaysRecordWhenActive: true
-        })
+        window.familiar.saveSettings({ alwaysRecordWhenActive: true })
       )
       expect(extractorResult?.ok).toBe(true)
 
@@ -268,8 +266,46 @@ test.describe('clipboard mirroring', () => {
         sessionId
       )
 
+      const clipboardImageBase64 = await window.evaluate(async () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = 256
+        canvas.height = 256
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          throw new Error('Failed to create canvas context')
+        }
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = '#111111'
+        ctx.font = '28px sans-serif'
+        ctx.fillText('Clipboard', 24, 112)
+        ctx.fillText('image', 24, 156)
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+        if (!blob) {
+          throw new Error('Failed to encode PNG blob')
+        }
+
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(String(reader.result || ''))
+          reader.onerror = () => reject(new Error('Failed to read PNG data URL'))
+          reader.readAsDataURL(blob)
+        })
+
+        const parts = String(dataUrl).split(',')
+        return parts.length > 1 ? parts[1] : ''
+      })
+      expect(clipboardImageBase64).toBeTruthy()
+      fs.writeFileSync(clipboardImagePath, Buffer.from(clipboardImageBase64, 'base64'))
+
       await electronApp.evaluate(() => {
-        globalThis.__FAMILIAR_TEST_CLIPBOARD_IMAGE = Buffer.from('clipboard-image-e2e')
+        const fsLocal = process.mainModule.require('node:fs')
+        const imagePath = process.env.FAMILIAR_E2E_CLIPBOARD_IMAGE_PATH
+        if (typeof imagePath !== 'string' || !imagePath) {
+          throw new Error('Missing FAMILIAR_E2E_CLIPBOARD_IMAGE_PATH.')
+        }
+        globalThis.__FAMILIAR_TEST_CLIPBOARD_IMAGE = fsLocal.readFileSync(imagePath)
       })
 
       await expect
@@ -288,9 +324,10 @@ test.describe('clipboard mirroring', () => {
 
       const [markdownFile] = fs.readdirSync(markdownSessionDir).filter((name) => name.endsWith('.clipboard.md'))
       const markdownContents = fs.readFileSync(path.join(markdownSessionDir, markdownFile), 'utf-8')
-      expect(markdownContents).toContain('mock-image-markdown')
+      expect(markdownContents).toContain('# OCR')
     } finally {
       await electronApp.close()
+      fs.rmSync(clipboardImagePath, { force: true })
     }
   })
 })

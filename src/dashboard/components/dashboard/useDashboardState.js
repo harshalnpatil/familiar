@@ -29,7 +29,6 @@ export const useDashboardState = ({ familiar, microcopy = {}, formatters = null 
   }
 
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
-  const [pendingApiKey, setPendingApiKey] = useState('')
   const [recordingStatus, setRecordingStatus] = useState({
     state: 'disabled',
     manualPaused: false,
@@ -225,14 +224,6 @@ export const useDashboardState = ({ familiar, microcopy = {}, formatters = null 
           typeof next.contextFolderPath === 'string'
             ? next.contextFolderPath
             : DEFAULT_SETTINGS.contextFolderPath,
-        llmProviderName:
-          typeof next.llmProviderName === 'string' ? next.llmProviderName : DEFAULT_SETTINGS.llmProviderName,
-        llmProviderApiKey:
-          typeof next.llmProviderApiKey === 'string' ? next.llmProviderApiKey : DEFAULT_SETTINGS.llmProviderApiKey,
-        stillsMarkdownExtractorType:
-          typeof next.stillsMarkdownExtractorType === 'string'
-            ? next.stillsMarkdownExtractorType
-            : DEFAULT_SETTINGS.stillsMarkdownExtractorType,
         alwaysRecordWhenActive: Boolean(next.alwaysRecordWhenActive),
         storageAutoCleanupRetentionDays:
           resolveAutoCleanupRetentionDays(next.storageAutoCleanupRetentionDays),
@@ -242,12 +233,11 @@ export const useDashboardState = ({ familiar, microcopy = {}, formatters = null 
         }
       }
       setSettings(nextSettings)
-      setPendingApiKey(nextSettings.llmProviderApiKey)
       setIsWizardCompleted(nextSettings.wizardCompleted)
       setActiveSection(resolveInitialActiveSection(nextSettings.wizardCompleted))
       return nextSettings
     },
-    [normalizeHarnesses, setActiveSection, setPendingApiKey]
+    [normalizeHarnesses, setActiveSection]
   )
 
   const saveSettings = useCallback(async (payload) => {
@@ -265,8 +255,6 @@ export const useDashboardState = ({ familiar, microcopy = {}, formatters = null 
     recordingCopy,
     settings,
     setSettings,
-    pendingApiKey,
-    setPendingApiKey,
     recordingStatus,
     setRecordingStatus,
     storageUsage,

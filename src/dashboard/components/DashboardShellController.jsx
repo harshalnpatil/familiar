@@ -177,15 +177,10 @@ function DashboardShellController({ familiar, microcopy = {}, formatters = null 
           checkPermissions: capture.checkPermissions,
           openScreenRecordingSettings: capture.openScreenRecordingSettings,
           permissionCheckState: capture.permissionCheckState,
-          persistProvider: storage.persistProvider,
-          saveLlmApiKey: storage.saveLlmApiKey,
-          setPendingApiKey: core.setPendingApiKey,
-          pendingApiKey: core.pendingApiKey,
           copyDebugLog: storage.copyDebugLog,
           copyLogBusy: core.isCopyingDebugLog,
           copyLogMessage: core.copyLogMessage,
-          copyLogError: core.copyLogError,
-          persistExtractor: storage.persistExtractor
+          copyLogError: core.copyLogError
         }}
         installSectionProps={{
           mc: core.mc,

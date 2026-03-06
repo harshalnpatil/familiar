@@ -121,11 +121,6 @@ const saveSettings = (settings, options = {}) => {
     const settingsPath = path.join(settingsDir, SETTINGS_FILE_NAME);
     const existing = loadSettings(options);
     const hasContextFolderPath = Object.prototype.hasOwnProperty.call(settings, 'contextFolderPath');
-    const hasLlmProviderApiKey = Object.prototype.hasOwnProperty.call(settings, 'llmProviderApiKey');
-    const hasLlmProviderName = Object.prototype.hasOwnProperty.call(settings, 'llmProviderName');
-    const hasLlmProviderTextModel = Object.prototype.hasOwnProperty.call(settings, 'llmProviderTextModel');
-    const hasLlmProviderVisionModel = Object.prototype.hasOwnProperty.call(settings, 'llmProviderVisionModel');
-    const hasStillsMarkdownExtractorType = Object.prototype.hasOwnProperty.call(settings, 'stillsMarkdownExtractorType');
     const hasUpdateLastCheckedAt = Object.prototype.hasOwnProperty.call(settings, 'updateLastCheckedAt');
     const hasStorageAutoCleanupRetentionDays = Object.prototype.hasOwnProperty.call(settings, 'storageAutoCleanupRetentionDays');
     const hasStorageAutoCleanupLastRunAt = Object.prototype.hasOwnProperty.call(settings, 'storageAutoCleanupLastRunAt');
@@ -137,13 +132,6 @@ const saveSettings = (settings, options = {}) => {
         settings,
         'familiarSkillInstalledVersion'
     );
-    const existingStillsExtractor =
-        existing && typeof existing.stills_markdown_extractor === 'object' ? existing.stills_markdown_extractor : {};
-    const existingStillsExtractorLlmProvider =
-        existingStillsExtractor && typeof existingStillsExtractor.llm_provider === 'object'
-            ? existingStillsExtractor.llm_provider
-            : {};
-    const existingProvider = existingStillsExtractorLlmProvider;
     const existingSkillInstaller =
         existing && typeof existing.skillInstaller === 'object' ? existing.skillInstaller : {};
     const existingHeartbeats = existing && typeof existing.heartbeats === 'object' ? existing.heartbeats : {};
@@ -157,60 +145,6 @@ const saveSettings = (settings, options = {}) => {
 
     fs.mkdirSync(settingsDir, { recursive: true });
     const payload = { contextFolderPath };
-    const hasAnyLlmProviderField =
-        hasLlmProviderApiKey || hasLlmProviderName || hasLlmProviderTextModel || hasLlmProviderVisionModel;
-
-    if (hasStillsMarkdownExtractorType) {
-        const rawType =
-            typeof settings.stillsMarkdownExtractorType === 'string' ? settings.stillsMarkdownExtractorType : '';
-        const normalized = rawType.trim().toLowerCase();
-        const nextType = normalized === 'apple_vision_ocr' ? 'apple_vision_ocr' : 'llm';
-        payload.stills_markdown_extractor = { ...existingStillsExtractor, type: nextType };
-        if (nextType === 'apple_vision_ocr') {
-            if (typeof payload.stills_markdown_extractor.level !== 'string') {
-                payload.stills_markdown_extractor.level = 'accurate';
-            }
-            if (!Object.prototype.hasOwnProperty.call(payload.stills_markdown_extractor, 'minConfidence')) {
-                payload.stills_markdown_extractor.minConfidence = 0.0;
-            }
-            if (!Object.prototype.hasOwnProperty.call(payload.stills_markdown_extractor, 'noCorrection')) {
-                payload.stills_markdown_extractor.noCorrection = false;
-            }
-            if (!Object.prototype.hasOwnProperty.call(payload.stills_markdown_extractor, 'languages')) {
-                payload.stills_markdown_extractor.languages = [];
-            }
-        }
-    } else if (Object.keys(existingStillsExtractor).length > 0 || hasAnyLlmProviderField) {
-        payload.stills_markdown_extractor = { ...existingStillsExtractor };
-    }
-
-    if (hasAnyLlmProviderField) {
-        if (!payload.stills_markdown_extractor || typeof payload.stills_markdown_extractor !== 'object') {
-            payload.stills_markdown_extractor = { type: 'llm' };
-        }
-        payload.stills_markdown_extractor.llm_provider = { ...existingProvider };
-        if (hasLlmProviderApiKey) {
-            payload.stills_markdown_extractor.llm_provider.api_key =
-                typeof settings.llmProviderApiKey === 'string' ? settings.llmProviderApiKey : '';
-        }
-        if (hasLlmProviderName) {
-            payload.stills_markdown_extractor.llm_provider.provider =
-                typeof settings.llmProviderName === 'string' ? settings.llmProviderName : '';
-        }
-        if (hasLlmProviderTextModel) {
-            payload.stills_markdown_extractor.llm_provider.text_model =
-                typeof settings.llmProviderTextModel === 'string' ? settings.llmProviderTextModel : '';
-        }
-        if (hasLlmProviderVisionModel) {
-            payload.stills_markdown_extractor.llm_provider.vision_model =
-                typeof settings.llmProviderVisionModel === 'string' ? settings.llmProviderVisionModel : '';
-        }
-    } else if (Object.keys(existingProvider).length > 0) {
-        if (!payload.stills_markdown_extractor || typeof payload.stills_markdown_extractor !== 'object') {
-            payload.stills_markdown_extractor = { ...existingStillsExtractor };
-        }
-        payload.stills_markdown_extractor.llm_provider = { ...existingProvider };
-    }
 
     if (hasUpdateLastCheckedAt) {
         payload.updateLastCheckedAt =

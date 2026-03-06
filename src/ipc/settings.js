@@ -155,15 +155,6 @@ function handleGetSettings() {
     try {
         const settings = loadSettings();
         const contextFolderPath = settings.contextFolderPath || '';
-        const llmProviderName = settings?.stills_markdown_extractor?.llm_provider?.provider || '';
-        const llmProviderApiKey = settings?.stills_markdown_extractor?.llm_provider?.api_key || '';
-        const stillsMarkdownExtractorType = (() => {
-            const type = settings?.stills_markdown_extractor?.type;
-            if (typeof type === 'string' && type.trim()) {
-                return type;
-            }
-            return 'apple_vision_ocr';
-        })();
         const alwaysRecordWhenActive = settings.alwaysRecordWhenActive === true;
         const storageAutoCleanupRetentionDays = resolveAutoCleanupRetentionDays(
             settings.storageAutoCleanupRetentionDays
@@ -190,9 +181,6 @@ function handleGetSettings() {
         return {
             contextFolderPath,
             validationMessage,
-            llmProviderName,
-            llmProviderApiKey,
-            stillsMarkdownExtractorType,
             alwaysRecordWhenActive,
             storageAutoCleanupRetentionDays,
             wizardCompleted,
@@ -208,9 +196,6 @@ function handleGetSettings() {
         return {
             contextFolderPath: '',
             validationMessage: 'Failed to load settings.',
-            llmProviderName: '',
-            llmProviderApiKey: '',
-            stillsMarkdownExtractorType: 'apple_vision_ocr',
             alwaysRecordWhenActive: false,
             storageAutoCleanupRetentionDays: resolveAutoCleanupRetentionDays(undefined),
             wizardCompleted: false,
@@ -223,9 +208,6 @@ function handleGetSettings() {
 
 function handleSaveSettings(_event, payload) {
     const hasContextFolderPath = Object.prototype.hasOwnProperty.call(payload || {}, 'contextFolderPath');
-    const hasLlmProviderApiKey = Object.prototype.hasOwnProperty.call(payload || {}, 'llmProviderApiKey');
-    const hasLlmProviderName = Object.prototype.hasOwnProperty.call(payload || {}, 'llmProviderName');
-    const hasStillsMarkdownExtractorType = Object.prototype.hasOwnProperty.call(payload || {}, 'stillsMarkdownExtractorType');
     const hasAlwaysRecordWhenActive = Object.prototype.hasOwnProperty.call(payload || {}, 'alwaysRecordWhenActive');
     const hasStorageAutoCleanupRetentionDays = Object.prototype.hasOwnProperty.call(payload || {}, 'storageAutoCleanupRetentionDays');
     const hasWizardCompleted = Object.prototype.hasOwnProperty.call(payload || {}, 'wizardCompleted');
@@ -235,9 +217,6 @@ function handleSaveSettings(_event, payload) {
 
     if (
         !hasContextFolderPath &&
-        !hasLlmProviderApiKey &&
-        !hasLlmProviderName &&
-        !hasStillsMarkdownExtractorType &&
         !hasAlwaysRecordWhenActive &&
         !hasStorageAutoCleanupRetentionDays &&
         !hasWizardCompleted &&
@@ -260,24 +239,6 @@ function handleSaveSettings(_event, payload) {
         }
 
         settingsPayload.contextFolderPath = validation.path;
-    }
-
-    if (hasLlmProviderApiKey) {
-        settingsPayload.llmProviderApiKey = typeof payload.llmProviderApiKey === 'string'
-            ? payload.llmProviderApiKey
-            : '';
-    }
-
-    if (hasLlmProviderName) {
-        settingsPayload.llmProviderName = typeof payload.llmProviderName === 'string'
-            ? payload.llmProviderName
-            : '';
-    }
-
-    if (hasStillsMarkdownExtractorType) {
-        const raw = typeof payload.stillsMarkdownExtractorType === 'string' ? payload.stillsMarkdownExtractorType : '';
-        const normalized = raw.trim().toLowerCase();
-        settingsPayload.stillsMarkdownExtractorType = normalized === 'apple_vision_ocr' ? 'apple_vision_ocr' : 'llm';
     }
 
     if (hasAlwaysRecordWhenActive) {

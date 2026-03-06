@@ -13,8 +13,6 @@ export const useDashboardStorage = (state, lifecycle) => {
     deleteWindow,
     setStorageDeleteMessage,
     setStorageDeleteError,
-    setPendingApiKey,
-    pendingApiKey,
     setRecordingMessage,
     setRecordingError,
     setCopyLogMessage,
@@ -155,116 +153,6 @@ export const useDashboardStorage = (state, lifecycle) => {
       if (typeof refreshStorageUsage === 'function') {
         await refreshStorageUsage()
       }
-    }
-  }
-
-  const saveLlmApiKey = async (nextKey) => {
-    if (!familiar || typeof familiar.saveSettings !== 'function') {
-      setRecordingError(mc.dashboard.settings.errors.bridgeUnavailableRestart)
-      return false
-    }
-    if (nextKey === settings.llmProviderApiKey) {
-      return true
-    }
-    if (!settings.llmProviderName) {
-      setRecordingError(mc.dashboard.settings.errors.selectLlmProvider)
-      return false
-    }
-
-    setRecordingMessage(mc.dashboard.settings.statusSaving)
-    try {
-      const result = await saveSettings({
-        llmProviderName: settings.llmProviderName,
-        llmProviderApiKey: nextKey
-      })
-      if (result) {
-        setPendingApiKey(nextKey)
-        setSettings((previous) => ({ ...previous, llmProviderApiKey: nextKey }))
-        setRecordingMessage(mc.dashboard.settings.statusSaved)
-        setRecordingError('')
-        return true
-      }
-      setRecordingMessage('')
-      setRecordingError(mc.dashboard.settings.errors.failedToSaveLlmKey)
-      return false
-    } catch (error) {
-      console.error('Failed to save llm key', error)
-      setRecordingMessage('')
-      setRecordingError(mc.dashboard.settings.errors.failedToSaveLlmKey)
-      return false
-    } finally {
-      setRecordingMessage('')
-    }
-  }
-
-  const persistProvider = async (providerName) => {
-    if (!familiar || typeof familiar.saveSettings !== 'function') {
-      setRecordingError(mc.dashboard.settings.errors.bridgeUnavailableRestart)
-      return false
-    }
-    if (!providerName) {
-      setRecordingError(mc.dashboard.settings.errors.selectLlmProvider)
-      return false
-    }
-    if (providerName === settings.llmProviderName) {
-      return true
-    }
-
-    setRecordingMessage(mc.dashboard.settings.statusSaving)
-    setRecordingError('')
-    try {
-      const result = await saveSettings({ llmProviderName: providerName })
-      if (result) {
-        setSettings((previous) => ({ ...previous, llmProviderName: providerName }))
-        if (pendingApiKey !== settings.llmProviderApiKey) {
-          await saveLlmApiKey(pendingApiKey)
-        } else {
-          setRecordingMessage(mc.dashboard.settings.statusSaved)
-        }
-        return true
-      }
-      setRecordingMessage('')
-      setRecordingError(mc.dashboard.settings.errors.failedToSaveLlmProvider)
-      return false
-    } catch (error) {
-      console.error('Failed to save provider', error)
-      setRecordingMessage('')
-      setRecordingError(mc.dashboard.settings.errors.failedToSaveLlmProvider)
-      return false
-    } finally {
-      setRecordingMessage('')
-    }
-  }
-
-  const persistExtractor = async (nextValue) => {
-    if (!familiar || typeof familiar.saveSettings !== 'function') {
-      setRecordingError(mc.dashboard.settings.errors.bridgeUnavailableRestart)
-      return false
-    }
-    const next = nextValue || 'apple_vision_ocr'
-    if (next === settings.stillsMarkdownExtractorType) {
-      return true
-    }
-
-    setRecordingMessage(mc.dashboard.settings.statusSaving)
-    setRecordingError('')
-    try {
-      const result = await saveSettings({ stillsMarkdownExtractorType: next })
-      if (result) {
-        setSettings((previous) => ({ ...previous, stillsMarkdownExtractorType: next }))
-        setRecordingMessage(mc.dashboard.settings.statusSaved)
-        return true
-      }
-      setRecordingMessage('')
-      setRecordingError(mc.dashboard.settings.errors.failedToSaveStillsMarkdownExtractor)
-      return false
-    } catch (error) {
-      console.error('Failed to save extractor', error)
-      setRecordingMessage('')
-      setRecordingError(mc.dashboard.settings.errors.failedToSaveStillsMarkdownExtractor)
-      return false
-    } finally {
-      setRecordingMessage('')
     }
   }
 
@@ -466,9 +354,6 @@ export const useDashboardStorage = (state, lifecycle) => {
     saveStorageRetention,
     copyDebugLog,
     deleteRecentFiles,
-    saveLlmApiKey,
-    persistProvider,
-    persistExtractor,
     setAlwaysRecord,
     pickContextFolder,
     openCurrentContextFolder,

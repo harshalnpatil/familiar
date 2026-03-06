@@ -6,41 +6,10 @@ const os = require('node:os')
 const path = require('node:path')
 
 const {
-  parseBatchResponse,
   createStillsMarkdownWorker,
   resolveMarkdownPath
 } = require('../src/screen-stills/stills-markdown-worker')
 const { RetryableError } = require('../src/utils/retry')
-
-test('parseBatchResponse splits markdown blocks by separator', () => {
-  const response = [
-    '---',
-    'format: familiar-layout-v0',
-    '---',
-    '# Layout Map',
-    'block 1',
-    '# OCR',
-    '- "A"',
-    '---',
-    '---',
-    'format: familiar-layout-v0',
-    '---',
-    '# Layout Map',
-    'block 2',
-    '# OCR',
-    '- "B"'
-  ].join('\n')
-
-  const map = parseBatchResponse({ responseText: response, imageIds: ['1', '2'] })
-  assert.ok(map.get('1').includes('block 1'))
-  assert.ok(map.get('2').includes('block 2'))
-  assert.ok(!map.get('1').trim().endsWith('---'))
-})
-
-test('parseBatchResponse returns empty map when no blocks', () => {
-  const map = parseBatchResponse({ responseText: '', imageIds: ['1'] })
-  assert.equal(map.size, 0)
-})
 
 test('resolveMarkdownPath preserves .clipboard suffix from source still image', () => {
   const contextFolderPath = '/tmp/context'
@@ -201,7 +170,7 @@ test('stills markdown worker does nothing on empty queue', async () => {
   assert.equal(calls.processing, 0)
 })
 
-test('stills markdown worker pauses when offline', async () => {
+test('stills markdown worker pauses when OCR helper is unavailable', async () => {
   const calls = { extract: 0, processing: 0, get: 0 }
   const queue = {
     requeueStaleProcessing: () => 0,
@@ -219,11 +188,14 @@ test('stills markdown worker pauses when offline', async () => {
     logger: { log: () => {}, warn: () => {}, error: () => {} },
     pollIntervalMs: 0,
     runImmediately: false,
-    isOnlineImpl: async () => false,
-    loadSettingsImpl: () => ({
-      stills_markdown_extractor: {
-        type: 'llm',
-        llm_provider: { provider: 'openai', api_key: 'key', vision_model: 'gpt-4o-mini' }
+    loadSettingsImpl: () => ({}),
+    createExtractorImpl: () => ({
+      type: 'apple_vision_ocr',
+      execution: { maxParallelBatches: 2 },
+      canRun: async () => ({ ok: false, reason: 'missing_ocr_binary', message: 'Missing OCR binary.' }),
+      extractBatch: async () => {
+        calls.extract += 1
+        return new Map()
       }
     }),
     createQueueImpl: () => queue,

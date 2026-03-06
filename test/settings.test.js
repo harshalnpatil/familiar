@@ -78,21 +78,6 @@ test('saveSettings preserves familiarSkillInstalledVersion when updating other s
   assert.equal(loaded.familiarSkillInstalledVersion, '2.0.0')
 })
 
-test('saveSettings persists stills_markdown_extractor.llm_provider api_key/provider and preserves context', () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
-  const settingsDir = path.join(tempRoot, 'settings')
-  const contextDir = path.join(tempRoot, 'context')
-  fs.mkdirSync(contextDir)
-
-  saveSettings({ contextFolderPath: contextDir }, { settingsDir })
-  saveSettings({ llmProviderApiKey: 'test-key', llmProviderName: 'gemini' }, { settingsDir })
-
-  const loaded = loadSettings({ settingsDir })
-  assert.equal(loaded.contextFolderPath, contextDir)
-  assert.equal(loaded.stills_markdown_extractor?.llm_provider?.provider, 'gemini')
-  assert.equal(loaded.stills_markdown_extractor?.llm_provider?.api_key, 'test-key')
-})
-
 test('saveSettings normalizes single skillInstaller harness + installPath into arrays', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
   const settingsDir = path.join(tempRoot, 'settings')
@@ -180,21 +165,6 @@ test('saveSettings migrates legacy on-disk single skillInstaller values to array
   assert.equal(loaded.wizardCompleted, true)
   assert.deepEqual(loaded.skillInstaller?.harness, ['codex'])
   assert.deepEqual(loaded.skillInstaller?.installPath, ['/tmp/.codex/skills/familiar'])
-})
-
-test('saveSettings preserves stills_markdown_extractor.llm_provider api_key/provider when updating context path', () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
-  const settingsDir = path.join(tempRoot, 'settings')
-  const contextDir = path.join(tempRoot, 'context')
-  fs.mkdirSync(contextDir)
-
-  saveSettings({ llmProviderApiKey: 'keep-me', llmProviderName: 'openai' }, { settingsDir })
-  saveSettings({ contextFolderPath: contextDir }, { settingsDir })
-
-  const loaded = loadSettings({ settingsDir })
-  assert.equal(loaded.contextFolderPath, contextDir)
-  assert.equal(loaded.stills_markdown_extractor?.llm_provider?.provider, 'openai')
-  assert.equal(loaded.stills_markdown_extractor?.llm_provider?.api_key, 'keep-me')
 })
 
 test('validateContextFolderPath rejects missing directory', () => {
@@ -317,31 +287,6 @@ test('saveSettings preserves wizardCompleted when updating other settings', () =
   const loaded = loadSettings({ settingsDir })
   assert.equal(loaded.wizardCompleted, true)
   assert.equal(loaded.contextFolderPath, contextDir)
-})
-
-test('saveSettings persists stills_markdown_extractor type', () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
-  const settingsDir = path.join(tempRoot, 'settings')
-
-  saveSettings({ stillsMarkdownExtractorType: 'apple_vision_ocr' }, { settingsDir })
-
-  const loaded = loadSettings({ settingsDir })
-  assert.equal(loaded.stills_markdown_extractor?.type, 'apple_vision_ocr')
-  assert.equal(loaded.stills_markdown_extractor?.level, 'accurate')
-})
-
-test('saveSettings preserves stills_markdown_extractor when updating other settings', () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
-  const settingsDir = path.join(tempRoot, 'settings')
-  const contextDir = path.join(tempRoot, 'context')
-  fs.mkdirSync(contextDir)
-
-  saveSettings({ stillsMarkdownExtractorType: 'apple_vision_ocr' }, { settingsDir })
-  saveSettings({ contextFolderPath: contextDir }, { settingsDir })
-
-  const loaded = loadSettings({ settingsDir })
-  assert.equal(loaded.contextFolderPath, contextDir)
-  assert.equal(loaded.stills_markdown_extractor?.type, 'apple_vision_ocr')
 })
 
 test('loadSettings exposes parse errors for diagnostics', () => {

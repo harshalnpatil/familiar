@@ -152,7 +152,6 @@ test('wizard happy flow completes setup and routes to Storage', async () => {
     const settingsPath = path.join(settingsDir, 'settings.json')
     const stored = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
     expect(stored.contextFolderPath).toBe(path.resolve(contextPath))
-    expect(stored.stills_markdown_extractor?.type ?? 'apple_vision_ocr').toBe('apple_vision_ocr')
     expect(stored.alwaysRecordWhenActive ?? false).toBe(true)
     expect(stored.wizardCompleted).toBe(true)
     expect(stored.skillInstaller.harness).toEqual(['codex'])
@@ -301,8 +300,7 @@ test('launching with wizardCompleted true skips wizard tab and starts on storage
     settingsDir,
     initialSettings: {
       wizardCompleted: true,
-      contextFolderPath: path.resolve(contextPath),
-      stills_markdown_extractor: { type: 'apple_vision_ocr' }
+      contextFolderPath: path.resolve(contextPath)
     },
     env: { FAMILIAR_LLM_MOCK: '1', FAMILIAR_LLM_MOCK_TEXT: 'gibberish' }
   })
