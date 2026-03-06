@@ -24,7 +24,6 @@ export function WizardSection({
   goWizardNext,
   completeWizard,
   pickContextFolder,
-  setAlwaysRecord,
   checkPermissions,
   openScreenRecordingSettings,
   wizardHarnessOptions,
@@ -374,62 +373,28 @@ export function WizardSection({
             <section
               id="wizard-recording-toggle-section"
               data-role="permission-recording-toggle-section"
-              data-permission-toggle-visibility="granted-only"
-              className={`space-y-2 ${isPermissionCheckGranted ? '' : 'hidden'}`}
+              data-permission-toggle-visibility="hidden"
+              className="hidden"
+              hidden
+              aria-hidden="true"
+            />
+            <p
+              id="wizard-always-record-when-active-error"
+              data-setting-error="always-record-when-active-error"
+              className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(wizardError) ? '' : 'hidden'}`}
+              role="alert"
+              aria-live="polite"
             >
-              <Label htmlFor="wizard-always-record-when-active" className="relative block w-full cursor-pointer group">
-                <Checkbox
-                  id="wizard-always-record-when-active"
-                  data-setting="always-record-when-active"
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={settings.alwaysRecordWhenActive}
-                  onChange={(event) => {
-                    void setAlwaysRecord(event.target.checked)
-                  }}
-                />
-                <div className="wizard-capture-toggle-card rounded-xl border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900 p-4 transition-all duration-300 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 peer-checked:border-indigo-500 peer-checked:bg-indigo-50/40 dark:peer-checked:border-indigo-500/50 dark:peer-checked:bg-indigo-500/10 peer-checked:shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="wizard-capture-toggle-icon w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 peer-checked:bg-indigo-100 dark:peer-checked:bg-indigo-900/50 peer-checked:border-transparent peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
-                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                          <rect x="3" y="7" width="13" height="10" rx="2" />
-                          <path d="M16 10l5-3v10l-5-3z" />
-                        </svg>
-                      </div>
-                      <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="text-[14px] font-medium text-zinc-900 dark:text-zinc-100">
-                          {getLabel(html.wizardCaptureWhileActive, 'Capture while active')}
-                        </span>
-                        <span className="wizard-capture-toggle-subtitle-off text-[14px] text-zinc-500 dark:text-zinc-400 block peer-checked:hidden transition-opacity">
-                          {getLabel(html.wizardActionRequiredToProceed, 'Action required to proceed')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="wizard-capture-toggle-switch relative w-12 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 transition-colors duration-300 ease-in-out peer-checked:bg-indigo-600 shadow-inner group-hover:bg-zinc-400 dark:group-hover:bg-zinc-600 peer-checked:group-hover:bg-indigo-700">
-                      <div className="wizard-capture-toggle-knob absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-300 peer-checked:translate-x-6" />
-                    </div>
-                  </div>
-                </div>
-              </Label>
-              <p
-                id="wizard-always-record-when-active-error"
-                data-setting-error="always-record-when-active-error"
-                className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(wizardError) ? '' : 'hidden'}`}
-                role="alert"
-                aria-live="polite"
-              >
-                {toDisplayText(wizardError)}
-              </p>
-              <span
-                id="wizard-always-record-when-active-status"
-                data-setting-status="always-record-when-active-status"
-                className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(wizardMessage) ? '' : 'hidden'}`}
-                aria-live="polite"
-              >
-                {toDisplayText(wizardMessage)}
-              </span>
-            </section>
+              {toDisplayText(wizardError)}
+            </p>
+            <span
+              id="wizard-always-record-when-active-status"
+              data-setting-status="always-record-when-active-status"
+              className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(wizardMessage) ? '' : 'hidden'}`}
+              aria-live="polite"
+            >
+              {toDisplayText(wizardMessage)}
+            </span>
           </div>
         </div>
 

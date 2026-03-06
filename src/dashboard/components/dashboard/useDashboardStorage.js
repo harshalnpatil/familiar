@@ -271,10 +271,10 @@ export const useDashboardStorage = (state, lifecycle) => {
   const setAlwaysRecord = async (nextValue) => {
     if (!familiar || typeof familiar.saveSettings !== 'function') {
       setRecordingError(mc.dashboard.settings.errors.bridgeUnavailableRestart)
-      return
+      return false
     }
     if (nextValue === settings.alwaysRecordWhenActive) {
-      return
+      return true
     }
 
     setRecordingError('')
@@ -287,14 +287,16 @@ export const useDashboardStorage = (state, lifecycle) => {
           await refreshRecordingStatus()
         }
         setRecordingMessage(mc.dashboard.settings.statusSaved)
-        return
+        return true
       }
       setRecordingMessage('')
       setRecordingError(mc.dashboard.settings.errors.failedToSaveSetting)
+      return false
     } catch (error) {
       console.error('Failed to save capture preference', error)
       setRecordingMessage('')
       setRecordingError(mc.dashboard.settings.errors.failedToSaveSetting)
+      return false
     }
   }
 

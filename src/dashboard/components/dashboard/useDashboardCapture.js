@@ -50,18 +50,19 @@ export const useDashboardCapture = (state) => {
 
   const checkPermissions = async () => {
     if (!familiar) {
-      return
+      return { permissionCheckState, permissionGranted: false, permissionStatus: 'unknown' }
     }
     if (permissionCheckState === 'checking') {
-      return
+      return { permissionCheckState: 'checking', permissionGranted: systemPermissionGranted, permissionStatus: recordingStatus.permissionStatus }
     }
 
     setPermissionCheckState('checking')
     setStatusBusySafe(true)
     try {
       const result = await resolvePermissionStateFromFamiliar(familiar)
+      const nextPermissionCheckState = resolvePermissionCheckState(result)
 
-      setPermissionCheckState(resolvePermissionCheckState(result))
+      setPermissionCheckState(nextPermissionCheckState)
       const nextPermissionState = resolvePermissionStateFromResult(result)
       if (nextPermissionState) {
         const permissionStatus = toDisplayText(nextPermissionState.permissionStatus)
@@ -70,12 +71,23 @@ export const useDashboardCapture = (state) => {
           permissionStatus: permissionStatus || 'unknown',
           permissionGranted: nextPermissionState.permissionGranted
         }))
+        return {
+          permissionCheckState: nextPermissionCheckState,
+          permissionGranted: nextPermissionState.permissionGranted,
+          permissionStatus: permissionStatus || 'unknown'
+        }
+      }
+      return {
+        permissionCheckState: nextPermissionCheckState,
+        permissionGranted: false,
+        permissionStatus: 'unknown'
       }
     } catch (error) {
       console.error('Failed to check permissions', error)
       setRecordingError('Failed to check screen recording permission.')
       setRecordingStatus((previous) => ({ ...previous, permissionGranted: false, permissionStatus: 'denied' }))
       setPermissionCheckState('denied')
+      return { permissionCheckState: 'denied', permissionGranted: false, permissionStatus: 'denied' }
     } finally {
       if (refreshRecordingStatusSafe) {
         await refreshRecordingStatusSafe()

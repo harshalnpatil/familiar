@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { Button } from '../ui/button'
+import { ButtonGroup } from '../ui/button-group'
 import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Select } from '../ui/select'
@@ -144,42 +145,64 @@ export function RecordingSection({
 
       <Card>
         <CardHeader>
-          <CardTitle>Permissions</CardTitle>
+          <CardTitle>Advanced</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              id="recording-check-permissions"
-              data-action="check-permissions"
-              variant="outline"
-              size="sm"
-              className={checkPermissionsClasses}
-              disabled={isCheckingPermissions}
-              onClick={() => {
-                void checkPermissions()
-              }}
-            >
-              {checkPermissionsLabel}
-            </Button>
-            <Button
-              id="recording-open-screen-recording-settings"
-              data-action="open-screen-recording-settings"
-              variant="outline"
-              size="sm"
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <ButtonGroup>
+                <Button
+                  id="recording-check-permissions"
+                  data-action="check-permissions"
+                  variant="outline"
+                  size="sm"
+                  className={checkPermissionsClasses}
+                  disabled={isCheckingPermissions}
+                  onClick={() => {
+                    void checkPermissions()
+                  }}
+                >
+                  {checkPermissionsLabel}
+                </Button>
+                <Button
+                  id="copy-debug-log"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void copyDebugLog()
+                  }}
+                  disabled={copyLogBusy}
+                >
+                  {mc.dashboard.settingsActions.copyLog}
+                </Button>
+              </ButtonGroup>
+              <ButtonGroup hidden={!isPermissionCheckDenied}>
+                <Button
+                  id="recording-open-screen-recording-settings"
+                  data-action="open-screen-recording-settings"
+                  variant="outline"
+                  size="sm"
+                  onClick={openScreenRecordingSettings}
+                >
+                  {openScreenRecordingLabel}
+                </Button>
+              </ButtonGroup>
+            </div>
+            <p
+              id="recording-open-screen-recording-settings-note"
+              data-open-screen-recording-settings-note
+              className="text-[14px] font-semibold text-zinc-500 dark:text-zinc-400"
               hidden={!isPermissionCheckDenied}
-              onClick={openScreenRecordingSettings}
             >
-              {openScreenRecordingLabel}
-            </Button>
+              Enable access to capture while active in Screen Recording settings.
+            </p>
+            <span id="copy-log-status" data-setting-status="copy-log-status" className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(copyLogMessage) ? '' : 'hidden'}`} aria-live="polite">
+              {toDisplayText(copyLogMessage)}
+            </span>
+            <span id="copy-log-error" data-setting-error="copy-log-error" className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(copyLogError) ? '' : 'hidden'}`} role="alert" aria-live="polite">
+              {toDisplayText(copyLogError)}
+            </span>
           </div>
-          <p
-            id="recording-open-screen-recording-settings-note"
-            data-open-screen-recording-settings-note
-            className="text-[14px] font-semibold text-zinc-500 dark:text-zinc-400"
-            hidden={!isPermissionCheckDenied}
-          >
-            Enable access to capture while active in Screen Recording settings.
-          </p>
         </CardContent>
       </Card>
 
@@ -300,25 +323,6 @@ export function RecordingSection({
         </CardContent>
       </Card>
 
-      <div className="w-full border-t border-zinc-200 dark:border-zinc-800 flex flex-col items-start gap-1 mt-auto pt-4">
-        <Button
-          id="copy-debug-log"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            void copyDebugLog()
-          }}
-          disabled={copyLogBusy}
-        >
-          {mc.dashboard.settingsActions.copyLog}
-        </Button>
-        <span id="copy-log-status" data-setting-status="copy-log-status" className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(copyLogMessage) ? '' : 'hidden'}`} aria-live="polite">
-          {toDisplayText(copyLogMessage)}
-        </span>
-        <span id="copy-log-error" data-setting-error="copy-log-error" className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(copyLogError) ? '' : 'hidden'}`} role="alert" aria-live="polite">
-          {toDisplayText(copyLogError)}
-        </span>
-      </div>
     </section>
   )
 }

@@ -52,6 +52,31 @@ function DashboardShellController({ familiar, microcopy = {}, formatters = null 
     setActiveSection: core.setActiveSection,
     setIsWizardCompleted: core.setIsWizardCompleted
   })
+  const checkWizardPermissions = useCallback(async () => {
+    core.setWizardError('')
+    core.setWizardMessage('')
+
+    const result = await capture.checkPermissions()
+    if (result?.permissionCheckState !== 'granted') {
+      return result
+    }
+
+    const didEnableCaptureWhileActive = await storage.setAlwaysRecord(true)
+    if (!didEnableCaptureWhileActive) {
+      core.setWizardError(core.mc.dashboard.settings.errors.failedToSaveSetting)
+    }
+
+    return {
+      ...result,
+      autoEnabledCaptureWhileActive: didEnableCaptureWhileActive
+    }
+  }, [
+    capture,
+    core.mc.dashboard.settings.errors.failedToSaveSetting,
+    core.setWizardError,
+    core.setWizardMessage,
+    storage
+  ])
 
   const navigation = buildDashboardNavigation(core.mc)
   const wizardCompleteMessage =
@@ -122,8 +147,7 @@ function DashboardShellController({ familiar, microcopy = {}, formatters = null 
           goWizardNext: wizard.goWizardNext,
           completeWizard: wizard.completeWizard,
           pickContextFolder: storage.pickContextFolder,
-          setAlwaysRecord: storage.setAlwaysRecord,
-          checkPermissions: capture.checkPermissions,
+          checkPermissions: checkWizardPermissions,
           openScreenRecordingSettings: capture.openScreenRecordingSettings,
           permissionCheckState: capture.permissionCheckState,
           wizardHarnessOptions: core.wizardHarnessOptions,

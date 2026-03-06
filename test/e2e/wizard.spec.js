@@ -37,7 +37,6 @@ const launchElectron = (options = {}) => {
 
 const completeWizardPermissionsStep = async (window, nextButton) => {
   const checkPermissionsButton = window.locator('#wizard-check-permissions')
-  const recordingToggle = window.locator('#wizard-always-record-when-active')
 
   await expect(checkPermissionsButton).toBeVisible()
   await expect(nextButton).toBeDisabled()
@@ -46,12 +45,7 @@ const completeWizardPermissionsStep = async (window, nextButton) => {
   const permission = await window.evaluate(() => window.familiar.checkScreenRecordingPermission())
   expect(permission?.permissionStatus).toBe('granted')
 
-  await expect(window.locator('#wizard-recording-toggle-section')).toBeVisible()
-  if (!(await recordingToggle.isChecked())) {
-    await window.locator('label[for="wizard-always-record-when-active"]').click({ force: true })
-    await expect(recordingToggle).toBeChecked()
-  }
-
+  await expect(window.locator('#wizard-recording-toggle-section')).toBeHidden()
   await expect(nextButton).toBeEnabled()
   await nextButton.click()
 }
@@ -168,7 +162,7 @@ test('wizard happy flow completes setup and routes to Storage', async () => {
   }
 })
 
-test('wizard permission step requires enabling recording', async () => {
+test('wizard permission step auto-enables capture after permissions are granted', async () => {
   const appRoot = path.join(__dirname, '../..')
   const contextPath = path.join(appRoot, 'test', 'fixtures', 'context')
   const expectedDisplayPath = path.join(path.resolve(contextPath), 'familiar')
