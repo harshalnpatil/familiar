@@ -32,7 +32,8 @@ const { createTrayIconFactory, getTrayIconPathForMenuBar } = require('./tray/ico
 const {
     hasUnreadHeartbeatRuns,
     loadRecentHeartbeatRuns,
-    markAllHeartbeatRunsSeen
+    markAllHeartbeatRunsSeen,
+    markHeartbeatRunOpened
 } = require('./tray/heartbeats');
 const { shouldOpenSettingsOnReady } = require('./launch-intent');
 const { APP_MODE, setAppMode } = require('./app-mode');
@@ -439,6 +440,12 @@ const getCurrentTrayMenuTemplate = () => {
     if (!trayHandlers) {
         return [];
     }
+    if (trayMenuController && typeof trayMenuController.getTrayMenuTemplate === 'function') {
+        return trayMenuController.getTrayMenuTemplate({
+            settings: loadSettings(),
+            recordingPaused: getCurrentScreenStillsState().manualPaused === true
+        });
+    }
     const recordingState = getCurrentScreenStillsState();
     return buildTrayMenuTemplate({
         ...trayHandlers,
@@ -484,6 +491,7 @@ const openHeartbeatFromTray = async (entry = {}) => {
     const status = typeof entry.status === 'string' ? entry.status.trim().toLowerCase() : '';
     const outputPath = typeof entry.outputPath === 'string' ? entry.outputPath.trim() : '';
     const targetPath = status === 'failed' ? resolveFamiliarLogPath() : outputPath;
+    const rowId = Number(entry?.id);
 
     if (!targetPath) {
         console.error('Heartbeat tray open skipped: missing target path', {
@@ -506,16 +514,27 @@ const openHeartbeatFromTray = async (entry = {}) => {
                 status,
                 targetPath
             });
-            return;
+        } else {
+            await openFileInTextEdit({ targetPath });
+
+            console.log('Opened heartbeat tray target', {
+                heartbeatId: typeof entry.heartbeatId === 'string' ? entry.heartbeatId : '',
+                status,
+                targetPath
+            });
         }
 
-        await openFileInTextEdit({ targetPath });
-
-        console.log('Opened heartbeat tray target', {
-            heartbeatId: typeof entry.heartbeatId === 'string' ? entry.heartbeatId : '',
-            status,
-            targetPath
-        });
+        if (Number.isFinite(rowId) && rowId > 0) {
+            const settings = loadSettings();
+            const markedOpenedCount = markHeartbeatRunOpened({
+                settings,
+                logger: console,
+                rowId
+            });
+            if (markedOpenedCount > 0) {
+                trayMenuController?.refreshTrayMenuFromSettings?.();
+            }
+        }
     } catch (error) {
         console.error('Failed to open heartbeat tray target', {
             heartbeatId: typeof entry.heartbeatId === 'string' ? entry.heartbeatId : '',
@@ -837,7 +856,8 @@ const registerMainProcessIpc = () => {
         const items = getCurrentTrayMenuTemplate().map((item = {}) => ({
             label: typeof item.label === 'string' ? item.label : '',
             type: typeof item.type === 'string' ? item.type : 'normal',
-            enabled: item.enabled !== false
+            enabled: item.enabled !== false,
+            hasIcon: item.icon != null
         }));
         return { ok: true, items };
     });

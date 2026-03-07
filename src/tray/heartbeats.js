@@ -90,9 +90,28 @@ const markAllHeartbeatRunsSeen = ({
   return Number(changes) || 0
 }
 
+const markHeartbeatRunOpened = ({
+  settings,
+  settingsLoader = loadSettings,
+  storeFactory = createHeartbeatHistoryStore,
+  logger = console,
+  rowId,
+  openedAtUtc
+} = {}) => {
+  const changes = withHeartbeatHistoryStore({
+    settings,
+    settingsLoader,
+    storeFactory,
+    logger,
+    callback: (store) => store.markHeartbeatOpened({ id: rowId, openedAtUtc })
+  })
+  return Number(changes) || 0
+}
+
 module.exports = {
   DEFAULT_HEARTBEAT_TRAY_LIMIT,
   loadRecentHeartbeatRuns,
   hasUnreadHeartbeatRuns,
-  markAllHeartbeatRunsSeen
+  markAllHeartbeatRunsSeen,
+  markHeartbeatRunOpened
 }

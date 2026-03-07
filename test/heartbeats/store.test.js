@@ -35,6 +35,9 @@ class FakeDatabase {
     if (typeof sql === 'string' && sql.includes('ADD COLUMN seen_at_utc')) {
       this.columns.push({ name: 'seen_at_utc' })
     }
+    if (typeof sql === 'string' && sql.includes('ADD COLUMN opened_at_utc')) {
+      this.columns.push({ name: 'opened_at_utc' })
+    }
     if (typeof sql === 'string' && sql.includes('ADD COLUMN attempt_number')) {
       this.columns.push({ name: 'attempt_number' })
     }
@@ -61,6 +64,7 @@ class FakeDatabase {
           completedAtUtc,
           status,
           seenAtUtc,
+          openedAtUtc,
           outputPath,
           errorMessage,
           attemptNumber,
@@ -76,6 +80,7 @@ class FakeDatabase {
             completedAtUtc,
             status,
             seenAtUtc,
+            openedAtUtc,
             outputPath,
             errorMessage,
             attemptNumber,
@@ -119,6 +124,21 @@ class FakeDatabase {
           this.rows.forEach((row) => {
             if (!row.seenAtUtc) {
               row.seenAtUtc = seenAtUtc
+              changes += 1
+            }
+          })
+          return { changes }
+        }
+      }
+    }
+
+    if (sql.includes('SET opened_at_utc = ?')) {
+      return {
+        run: (openedAtUtc, id) => {
+          let changes = 0
+          this.rows.forEach((row) => {
+            if (row.id === id && !row.openedAtUtc) {
+              row.openedAtUtc = openedAtUtc
               changes += 1
             }
           })
@@ -182,6 +202,7 @@ test('heartbeat history store records and returns recent runs in descending comp
   assert.equal(rows[0].status, HEARTBEAT_HISTORY_STATUS.FAILED)
   assert.equal(rows[0].errorMessage, 'Runner unavailable')
   assert.equal(rows[0].seenAtUtc, null)
+  assert.equal(rows[0].openedAtUtc, null)
   assert.equal(rows[1].heartbeatId, 'hb-1')
   assert.equal(rows[1].outputPath, '/tmp/daily-summary.md')
 
@@ -199,17 +220,20 @@ test('heartbeat history store adds seen_at_utc before creating unread index on o
   }).close()
 
   const alterIndex = fakeDb.execCalls.findIndex((sql) => sql.includes('ALTER TABLE heartbeats ADD COLUMN seen_at_utc TEXT'))
+  const openedIndex = fakeDb.execCalls.findIndex((sql) => sql.includes('ALTER TABLE heartbeats ADD COLUMN opened_at_utc TEXT'))
   const attemptIndex = fakeDb.execCalls.findIndex((sql) => sql.includes('ALTER TABLE heartbeats ADD COLUMN attempt_number INTEGER NOT NULL DEFAULT 1'))
   const retryColumnIndex = fakeDb.execCalls.findIndex((sql) => sql.includes('ALTER TABLE heartbeats ADD COLUMN next_retry_at_utc TEXT'))
   const unreadIndex = fakeDb.execCalls.findIndex((sql) => sql.includes('idx_heartbeats_seen_completed'))
   const retryLookupIndex = fakeDb.execCalls.findIndex((sql) => sql.includes('idx_heartbeats_retry_lookup'))
 
   assert.notEqual(alterIndex, -1)
+  assert.notEqual(openedIndex, -1)
   assert.notEqual(attemptIndex, -1)
   assert.notEqual(retryColumnIndex, -1)
   assert.notEqual(unreadIndex, -1)
   assert.notEqual(retryLookupIndex, -1)
   assert.ok(alterIndex < unreadIndex)
+  assert.ok(openedIndex < unreadIndex)
   assert.ok(attemptIndex < retryLookupIndex)
   assert.ok(retryColumnIndex < retryLookupIndex)
 
@@ -240,6 +264,47 @@ test('heartbeat history store reports unread rows and marks them seen', () => {
   )
   assert.equal(store.hasUnreadHeartbeats(), false)
   assert.equal(store.getRecentHeartbeats({ limit: 1 })[0].seenAtUtc, '2026-03-05T09:00:00.000Z')
+
+  store.close()
+  fs.rmSync(root, { recursive: true, force: true })
+})
+
+test('heartbeat history store marks a single row as opened without affecting others', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'heartbeat-history-'))
+  const store = createHeartbeatHistoryStore({
+    contextFolderPath: root,
+    databaseFactory: () => new FakeDatabase()
+  })
+
+  const firstId = store.recordHeartbeatRun({
+    heartbeatId: 'hb-1',
+    topic: 'daily-summary',
+    runner: 'codex',
+    scheduledAtUtc: '2026-03-05T08:00:00.000Z',
+    startedAtUtc: '2026-03-05T08:00:10.000Z',
+    completedAtUtc: '2026-03-05T08:01:00.000Z',
+    status: HEARTBEAT_HISTORY_STATUS.COMPLETED
+  })
+  store.recordHeartbeatRun({
+    heartbeatId: 'hb-2',
+    topic: 'retro',
+    runner: 'codex',
+    scheduledAtUtc: '2026-03-05T09:00:00.000Z',
+    startedAtUtc: '2026-03-05T09:00:10.000Z',
+    completedAtUtc: '2026-03-05T09:01:00.000Z',
+    status: HEARTBEAT_HISTORY_STATUS.COMPLETED
+  })
+
+  assert.equal(
+    store.markHeartbeatOpened({ id: firstId, openedAtUtc: '2026-03-05T09:05:00.000Z' }),
+    1
+  )
+
+  const rows = store.getRecentHeartbeats({ limit: 5 })
+  const openedRow = rows.find((row) => row.id === firstId)
+  const untouchedRow = rows.find((row) => row.id !== firstId)
+  assert.equal(openedRow?.openedAtUtc, '2026-03-05T09:05:00.000Z')
+  assert.equal(untouchedRow?.openedAtUtc, null)
 
   store.close()
   fs.rmSync(root, { recursive: true, force: true })

@@ -2,49 +2,21 @@ const { buildTrayMenuTemplate } = require('../menu');
 const { loadSettings } = require('../settings');
 const { getRecordingIndicatorVisuals } = require('../recording-status-indicator');
 const { microcopy } = require('../microcopy');
+const { createCircleIconFactory } = require('./circle-icon');
 
 const getElectronMenu = () => {
     const electron = require('electron');
     return electron && electron.Menu ? electron.Menu : null;
 };
 
-const getElectronNativeImage = () => {
-    const electron = require('electron');
-    return electron && electron.nativeImage ? electron.nativeImage : null;
-};
-
-const encodeSvgDataUrl = (svg) => `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
-
 function createRecordingIndicatorIconFactory({
-    nativeImage = getElectronNativeImage(),
     logger = console,
 } = {}) {
-    const cache = new Map();
-
-    return ({ colorHex } = {}) => {
-        if (!nativeImage || typeof nativeImage.createFromDataURL !== 'function') {
-            return null;
-        }
-        if (typeof colorHex !== 'string' || colorHex.length === 0) {
-            return null;
-        }
-        if (cache.has(colorHex)) {
-            return cache.get(colorHex);
-        }
-
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><circle cx="6" cy="6" r="4" fill="${colorHex}"/></svg>`;
-        const icon = nativeImage.createFromDataURL(encodeSvgDataUrl(svg));
-        if (!icon || (typeof icon.isEmpty === 'function' && icon.isEmpty())) {
-            logger.warn('Tray recording indicator icon creation failed', { colorHex });
-            return null;
-        }
-
-        const sizedIcon = typeof icon.resize === 'function'
-            ? icon.resize({ width: 12, height: 12 })
-            : icon;
-        cache.set(colorHex, sizedIcon);
-        return sizedIcon;
-    };
+    return createCircleIconFactory({
+        logger,
+        size: 12,
+        circleRadius: 4
+    });
 }
 
 function createTrayMenuController({
@@ -78,19 +50,10 @@ function createTrayMenuController({
         return getRecordingState() || null;
     };
 
-    function updateTrayMenu({ recordingPaused, settings = null } = {}) {
-        if (!menu) {
-            logger.warn('Tray menu update skipped: menu unavailable');
-            return;
-        }
-        if (!tray) {
-            logger.warn('Tray menu update skipped: tray not ready');
-            return;
-        }
-
+    function getTrayMenuTemplate({ recordingPaused, settings = null } = {}) {
         if (!trayHandlers) {
-            logger.warn('Tray menu update skipped: handlers not ready');
-            return;
+            logger.warn('Tray menu template build skipped: handlers not ready');
+            return [];
         }
 
         const isPaused =
@@ -103,15 +66,32 @@ function createTrayMenuController({
         const recentHeartbeats = typeof getRecentHeartbeats === 'function'
             ? getRecentHeartbeats({ settings })
             : [];
+        return buildTrayMenuTemplateFn({
+            ...trayHandlers,
+            recentHeartbeats,
+            recordingPaused: isPaused,
+            recordingState,
+            recordingStatusIcon
+        });
+    }
+
+    function updateTrayMenu({ recordingPaused, settings = null } = {}) {
+        if (!menu) {
+            logger.warn('Tray menu update skipped: menu unavailable');
+            return;
+        }
+        if (!tray) {
+            logger.warn('Tray menu update skipped: tray not ready');
+            return;
+        }
+
         const trayMenu = menu.buildFromTemplate(
-            buildTrayMenuTemplateFn({
-                ...trayHandlers,
-                recentHeartbeats,
-                recordingPaused: isPaused,
-                recordingState,
-                recordingStatusIcon
-            })
+            getTrayMenuTemplate({ recordingPaused, settings })
         );
+        const resolvedRecordingPaused =
+            typeof recordingPaused === 'boolean' ? recordingPaused : resolveRecordingPaused();
+        const recordingState = resolveRecordingState();
+        const recordingIndicator = getRecordingIndicatorVisuals(recordingState || {});
 
         tray.setContextMenu(trayMenu);
         if (typeof tray.setToolTip === 'function') {
@@ -119,7 +99,7 @@ function createTrayMenuController({
         }
 
         logger.log('Tray menu updated', {
-            recordingPaused: isPaused,
+            recordingPaused: resolvedRecordingPaused,
             recordingIndicatorStatus: recordingIndicator.status
         });
     }
@@ -166,6 +146,7 @@ function createTrayMenuController({
 
     return {
         handleTrayMenuOpen,
+        getTrayMenuTemplate,
         updateTrayMenu,
         refreshTrayMenuFromSettings,
         registerTrayRefreshHandlers,

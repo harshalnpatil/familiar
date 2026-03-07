@@ -4,6 +4,9 @@ const { microcopy } = require('./microcopy')
 const toSafeString = (value, fallback = '') =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback
 
+const hasTimestampValue = (value) =>
+  typeof value === 'string' && value.trim().length > 0
+
 const formatHeartbeatCompletedAt = (value) => {
   if (typeof value !== 'string' || value.trim().length === 0) {
     return ''
@@ -40,19 +43,21 @@ const buildHeartbeatMenuItems = ({
     const topic = toSafeString(entry.topic, 'Heartbeat')
     const completedAtText = formatHeartbeatCompletedAt(entry.completedAtUtc)
     const isFailed = toSafeString(entry.status) === 'failed'
-    const label = [
+    const isOpened = hasTimestampValue(entry.openedAtUtc)
+    const baseLabel = [
       isFailed ? `${topic} (failed)` : topic,
       completedAtText
     ].filter(Boolean).join(' - ')
 
-    return {
-      label,
+    const item = {
+      label: isOpened ? baseLabel : `⦿ ${baseLabel}`,
       click: () => {
         if (typeof onOpenHeartbeat === 'function') {
           onOpenHeartbeat(entry)
         }
       }
     }
+    return item
   })
 
   return [

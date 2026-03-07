@@ -176,7 +176,8 @@ test('buildTrayMenuTemplate adds recent heartbeat rows and opens selected row', 
                 heartbeatId: 'hb-2',
                 topic: 'weekly retro',
                 status: 'failed',
-                completedAtUtc: '2026-03-06T09:15:00.000Z'
+                completedAtUtc: '2026-03-06T09:15:00.000Z',
+                openedAtUtc: '2026-03-06T09:20:00.000Z'
             }
         ]
     });
@@ -184,11 +185,13 @@ test('buildTrayMenuTemplate adds recent heartbeat rows and opens selected row', 
     const labels = template.filter((item) => item.label).map((item) => item.label);
 
     assert.ok(labels.includes(microcopy.tray.heartbeats.section));
-    assert.ok(labels.some((label) => label.startsWith('daily summary - ')));
+    assert.ok(labels.some((label) => label.startsWith('⦿ daily summary - ')));
     assert.ok(labels.some((label) => label.startsWith('weekly retro (failed) - ')));
 
-    const heartbeatItem = template.find((item) => item.label && item.label.startsWith('daily summary - '));
+    const heartbeatItem = template.find((item) => item.label && item.label.startsWith('⦿ daily summary - '));
+    const openedItem = template.find((item) => item.label && item.label.startsWith('weekly retro (failed) - '));
     assert.ok(heartbeatItem);
+    assert.ok(openedItem);
 
     heartbeatItem.click();
 

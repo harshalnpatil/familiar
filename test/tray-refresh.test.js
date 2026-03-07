@@ -3,6 +3,7 @@ const assert = require('node:assert/strict')
 
 const { createTrayMenuController } = require('../src/tray/refresh')
 const { microcopy } = require('../src/microcopy')
+const createMockIndicatorIcon = () => ({ id: 'indicator' })
 
 test('tray menu shows recording and paused labels without auto-refresh loop', () => {
     let recordingState = { manualPaused: false, state: 'recording', pauseRemainingMs: 0 }
@@ -16,6 +17,7 @@ test('tray menu shows recording and paused labels without auto-refresh loop', ()
         },
         trayHandlers: {},
         getRecordingState: () => recordingState,
+        recordingIndicatorIconFactory: createMockIndicatorIcon,
         menu: {
             buildFromTemplate: (template) => template
         },
@@ -54,6 +56,7 @@ test('registerTrayRefreshHandlers refreshes tray on click and right-click', () =
         },
         trayHandlers: {},
         getRecordingState: () => ({ manualPaused: false, state: 'armed', pauseRemainingMs: 0 }),
+        recordingIndicatorIconFactory: createMockIndicatorIcon,
         menu: {
             buildFromTemplate: (template) => template
         },
@@ -92,6 +95,7 @@ test('registerTrayRefreshHandlers runs tray-open side effects after refresh', as
                 resolve()
             },
             getRecordingState: () => ({ manualPaused: false, state: 'armed', pauseRemainingMs: 0 }),
+            recordingIndicatorIconFactory: createMockIndicatorIcon,
             menu: {
                 buildFromTemplate: (template) => template
             },
@@ -121,6 +125,7 @@ test('handleTrayMenuOpen is exposed for callers that need tray-open side effects
             trayOpenCalls += 1
         },
         getRecordingState: () => ({ manualPaused: false, state: 'armed', pauseRemainingMs: 0 }),
+        recordingIndicatorIconFactory: createMockIndicatorIcon,
         menu: {
             buildFromTemplate: (template) => template
         },
@@ -156,6 +161,7 @@ test('tray refresh loads recent heartbeats from the provided resolver', () => {
             ]
         },
         getRecordingState: () => ({ manualPaused: false, state: 'armed', pauseRemainingMs: 0 }),
+        recordingIndicatorIconFactory: createMockIndicatorIcon,
         menu: {
             buildFromTemplate: (template) => template
         },

@@ -13,6 +13,10 @@ const toTimeInputValue = (offsetMinutes) => {
 
 const readSettings = (settingsPath) => JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
 
+const writeSettings = (settingsPath, settings) => {
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8')
+}
+
 const readStoredHeartbeat = (settingsPath) => {
   const items = readSettings(settingsPath)?.heartbeats?.items
   return Array.isArray(items) && items.length === 1 ? items[0] : null
@@ -44,6 +48,11 @@ const expectStoredHeartbeat = async (settingsPath, expected) => {
       }
     })
     .toEqual(expected)
+}
+
+const openHeartbeatsSection = async (window) => {
+  await window.getByRole('tab', { name: 'Heartbeats' }).click()
+  await expect(window.locator('#section-title')).toHaveText('Heartbeats')
 }
 
 const scrollSettingsContent = async (window, position = 'bottom') => {
@@ -240,6 +249,91 @@ test('heartbeats editing flow updates settings for create, edit, disable, and de
   }
 })
 
+test('heartbeats tab refetches settings every time it is opened', async () => {
+  const appRoot = path.join(__dirname, '../..')
+  const contextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-heartbeats-refresh-context-e2e-'))
+  const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-heartbeats-refresh-settings-e2e-'))
+  const settingsPath = path.join(settingsDir, 'settings.json')
+  const initialSettings = {
+    wizardCompleted: true,
+    contextFolderPath: contextPath,
+    skillInstaller: {
+      harness: ['codex'],
+      installPath: ['/tmp/.codex/skills/familiar']
+    },
+    heartbeats: {
+      items: [
+        {
+          id: 'heartbeat-1',
+          topic: 'initial_topic',
+          prompt: 'Initial prompt',
+          runner: 'codex',
+          enabled: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          schedule: {
+            frequency: 'daily',
+            time: '09:00',
+            timezone: 'Asia/Jerusalem'
+          },
+          lastRunAt: null
+        }
+      ]
+    }
+  }
+
+  writeSettings(settingsPath, initialSettings)
+
+  const electronApp = await electron.launch({
+    args: buildLaunchArgs(),
+    cwd: appRoot,
+    env: {
+      ...process.env,
+      FAMILIAR_E2E: '1',
+      FAMILIAR_E2E_CONTEXT_PATH: contextPath,
+      FAMILIAR_SETTINGS_DIR: settingsDir
+    }
+  })
+
+  try {
+    const window = await electronApp.firstWindow()
+    await window.waitForLoadState('domcontentloaded')
+
+    await openHeartbeatsSection(window)
+    await expect(window.getByText('initial_topic', { exact: true })).toBeVisible()
+
+    const settingsAfterFirstOpen = readSettings(settingsPath)
+    settingsAfterFirstOpen.heartbeats.items[0] = {
+      ...settingsAfterFirstOpen.heartbeats.items[0],
+      topic: 'refetched_topic_once',
+      updatedAt: Date.now()
+    }
+    writeSettings(settingsPath, settingsAfterFirstOpen)
+
+    await window.getByRole('tab', { name: 'Storage' }).click()
+    await expect(window.locator('#section-title')).toHaveText('Storage')
+    await openHeartbeatsSection(window)
+    await expect(window.getByText('refetched_topic_once', { exact: true })).toBeVisible()
+    await expect(window.getByText('initial_topic', { exact: true })).toHaveCount(0)
+
+    const settingsAfterSecondOpen = readSettings(settingsPath)
+    settingsAfterSecondOpen.heartbeats.items[0] = {
+      ...settingsAfterSecondOpen.heartbeats.items[0],
+      topic: 'refetched_topic_twice',
+      updatedAt: Date.now()
+    }
+    writeSettings(settingsPath, settingsAfterSecondOpen)
+
+    await window.getByRole('tab', { name: 'Connect Agent' }).click()
+    await expect(window.locator('#section-title')).toHaveText('Connect Agent')
+    await openHeartbeatsSection(window)
+    await expect(window.getByText('refetched_topic_twice', { exact: true })).toBeVisible()
+    await expect(window.getByText('refetched_topic_once', { exact: true })).toHaveCount(0)
+  } finally {
+    await electronApp.close()
+  }
+})
+
 test('heartbeat run appears in tray and tray click opens the output file in TextEdit', async () => {
   const appRoot = path.join(__dirname, '../..')
   const contextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-heartbeats-run-context-e2e-'))
@@ -319,7 +413,8 @@ test('heartbeat run appears in tray and tray click opens the output file in Text
     const trayMenu = await window.evaluate(() => window.familiar.getTrayMenuItemsForE2E())
     expect(trayMenu?.ok).toBe(true)
     expect(trayMenu.items.some((item) => item.label === 'Heartbeats')).toBe(true)
-    expect(trayMenu.items.some((item) => /daily_summary - /.test(item.label))).toBe(true)
+    const unreadTrayMenuItem = trayMenu.items.find((item) => /^⦿ daily_summary - /.test(item.label))
+    expect(unreadTrayMenuItem).toBeTruthy()
 
     const trayHeartbeats = await window.evaluate(() => window.familiar.getTrayHeartbeatsForE2E())
     expect(trayHeartbeats?.ok).toBe(true)
@@ -329,15 +424,31 @@ test('heartbeat run appears in tray and tray click opens the output file in Text
     const trayItem = trayHeartbeats.items.find((item) => item.heartbeatId === createdHeartbeat.id)
     expect(trayItem).toBeTruthy()
     expect(trayItem.status).toBe('completed')
+    expect(trayItem.openedAtUtc).toBeNull()
 
     const trayOpen = await window.evaluate(() => window.familiar.openTrayMenuForE2E())
     expect(trayOpen?.ok).toBe(true)
     expect(trayOpen?.iconState?.hasUnreadHeartbeats).toBe(false)
     expect(path.basename(trayOpen?.iconState?.iconPath || '')).toBe('icon_white_owl.png')
 
+    const trayHeartbeatsAfterOpen = await window.evaluate(() => window.familiar.getTrayHeartbeatsForE2E())
+    const trayItemAfterOpen = trayHeartbeatsAfterOpen?.items?.find((item) => item.heartbeatId === createdHeartbeat.id)
+    expect(trayItemAfterOpen?.openedAtUtc).toBeNull()
+
     const trayClick = await window.evaluate((rowId) => window.familiar.clickTrayHeartbeatForE2E({ rowId }), trayItem.id)
     expect(trayClick?.ok).toBe(true)
     expect(trayClick?.targetPath).toBe(runResult.outputPath)
+
+    await expect.poll(async () => {
+      const nextTrayHeartbeats = await window.evaluate(() => window.familiar.getTrayHeartbeatsForE2E())
+      const nextTrayItem = nextTrayHeartbeats?.items?.find((item) => item.heartbeatId === createdHeartbeat.id)
+      return typeof nextTrayItem?.openedAtUtc === 'string' && nextTrayItem.openedAtUtc.length > 0
+    }).toBe(true)
+
+    await expect.poll(async () => {
+      const nextTrayMenu = await window.evaluate(() => window.familiar.getTrayMenuItemsForE2E())
+      return nextTrayMenu?.items?.some((item) => /^⦿ daily_summary - /.test(item.label))
+    }).toBe(false)
 
     const textEditEvents = await window.evaluate(() => window.familiar.getTextEditOpenEventsForE2E())
     expect(textEditEvents?.ok).toBe(true)

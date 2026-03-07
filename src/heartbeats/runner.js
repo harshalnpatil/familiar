@@ -6,7 +6,9 @@ const {
 } = require('./utils')
 
 const logger = console
-const HEARTBEAT_PROMPT_SUFFIX = '\n do only what you are asked. dont ask any followup questions'
+const HEARTBEAT_PROMPT_SUFFIX = (
+  '\n do only what you are asked. dont ask any followup questions. if the user asks for a specific format, output only that format and nothing else'
+)
 const HEARTBEAT_WORKSPACE_FILE_RESTRICTION = (
   'you must not create any files outside of the workspace'
 )

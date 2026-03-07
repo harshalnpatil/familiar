@@ -26,6 +26,7 @@ const mapHeartbeatRow = (row = {}) => ({
   completedAtUtc: row.completedAtUtc,
   status: row.status,
   seenAtUtc: row.seenAtUtc,
+  openedAtUtc: row.openedAtUtc,
   outputPath: row.outputPath,
   errorMessage: row.errorMessage,
   attemptNumber: Number(row.attemptNumber) || 1,
@@ -62,6 +63,7 @@ const createHeartbeatHistoryStore = ({
       completed_at_utc TEXT NOT NULL,
       status TEXT NOT NULL CHECK (status IN ('completed', 'failed')),
       seen_at_utc TEXT,
+      opened_at_utc TEXT,
       output_path TEXT,
       error_message TEXT,
       attempt_number INTEGER NOT NULL DEFAULT 1,
@@ -74,6 +76,9 @@ const createHeartbeatHistoryStore = ({
     : []
   if (!existingColumns.includes('seen_at_utc')) {
     db.exec('ALTER TABLE heartbeats ADD COLUMN seen_at_utc TEXT')
+  }
+  if (!existingColumns.includes('opened_at_utc')) {
+    db.exec('ALTER TABLE heartbeats ADD COLUMN opened_at_utc TEXT')
   }
   if (!existingColumns.includes('attempt_number')) {
     db.exec('ALTER TABLE heartbeats ADD COLUMN attempt_number INTEGER NOT NULL DEFAULT 1')
@@ -100,11 +105,12 @@ const createHeartbeatHistoryStore = ({
       completed_at_utc,
       status,
       seen_at_utc,
+      opened_at_utc,
       output_path,
       error_message,
       attempt_number,
       next_retry_at_utc
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   const selectRecentHeartbeatsStmt = db.prepare(`
@@ -118,6 +124,7 @@ const createHeartbeatHistoryStore = ({
       completed_at_utc AS completedAtUtc,
       status,
       seen_at_utc AS seenAtUtc,
+      opened_at_utc AS openedAtUtc,
       output_path AS outputPath,
       error_message AS errorMessage,
       attempt_number AS attemptNumber,
@@ -138,6 +145,7 @@ const createHeartbeatHistoryStore = ({
       completed_at_utc AS completedAtUtc,
       status,
       seen_at_utc AS seenAtUtc,
+      opened_at_utc AS openedAtUtc,
       output_path AS outputPath,
       error_message AS errorMessage,
       attempt_number AS attemptNumber,
@@ -160,6 +168,13 @@ const createHeartbeatHistoryStore = ({
     WHERE seen_at_utc IS NULL
   `)
 
+  const markHeartbeatOpenedStmt = db.prepare(`
+    UPDATE heartbeats
+    SET opened_at_utc = ?
+    WHERE id = ?
+      AND opened_at_utc IS NULL
+  `)
+
   const recordHeartbeatRun = ({
     heartbeatId,
     topic,
@@ -169,6 +184,7 @@ const createHeartbeatHistoryStore = ({
     completedAtUtc,
     status,
     seenAtUtc = null,
+    openedAtUtc = null,
     outputPath = null,
     errorMessage = null,
     attemptNumber = 1,
@@ -210,6 +226,7 @@ const createHeartbeatHistoryStore = ({
       safeCompletedAtUtc,
       safeStatus,
       toSafeString(seenAtUtc) || null,
+      toSafeString(openedAtUtc) || null,
       toSafeString(outputPath) || null,
       toSafeString(errorMessage) || null,
       safeAttemptNumber,
@@ -278,6 +295,27 @@ const createHeartbeatHistoryStore = ({
     return changes
   }
 
+  const markHeartbeatOpened = ({ id, openedAtUtc = new Date().toISOString() } = {}) => {
+    const safeId = Number.isFinite(id) && id > 0 ? Math.floor(id) : null
+    const safeOpenedAtUtc = toSafeString(openedAtUtc)
+    if (!safeId) {
+      throw new Error('id is required to mark a heartbeat as opened.')
+    }
+    if (!safeOpenedAtUtc) {
+      throw new Error('openedAtUtc is required to mark a heartbeat as opened.')
+    }
+
+    const info = markHeartbeatOpenedStmt.run(safeOpenedAtUtc, safeId)
+    const changes = Number(info?.changes) || 0
+    if (changes > 0) {
+      logger.log('Marked heartbeat run as opened', {
+        id: safeId,
+        openedAtUtc: safeOpenedAtUtc
+      })
+    }
+    return changes
+  }
+
   const close = () => {
     db.close()
   }
@@ -289,6 +327,7 @@ const createHeartbeatHistoryStore = ({
     getLatestPendingRetry,
     hasUnreadHeartbeats,
     markAllHeartbeatsSeen,
+    markHeartbeatOpened,
     close
   }
 }

@@ -1,8 +1,13 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import {
+  mergeHeartbeatsIntoSettings,
+  shouldRefreshHeartbeatsOnSectionOpen
+} from './heartbeat-refresh-utils.cjs'
 
 export const useDashboardLifecycle = (state, options = {}) => {
   const {
     familiar,
+    activeSection,
     mc,
     applySettingsDefaults,
     hasLoadedSettingsRef,
@@ -25,6 +30,7 @@ export const useDashboardLifecycle = (state, options = {}) => {
   } = state
 
   const onInitialHarnessesLoaded = options.onInitialHarnessesLoaded || (() => Promise.resolve({ ok: true }))
+  const previousActiveSectionRef = useRef(activeSection)
 
   const refreshStorageUsage = useCallback(async () => {
     if (!familiar || typeof familiar.getStorageUsageBreakdown !== 'function') {
@@ -83,6 +89,21 @@ export const useDashboardLifecycle = (state, options = {}) => {
       console.error('Failed to load recording status', error)
     }
   }, [familiar, setRecordingStatus])
+
+  const refreshHeartbeats = useCallback(async () => {
+    if (!familiar || typeof familiar.getSettings !== 'function') {
+      return { ok: false, reason: 'bridgeUnavailable' }
+    }
+
+    try {
+      const result = await familiar.getSettings()
+      setSettings((previous) => mergeHeartbeatsIntoSettings(previous, result))
+      return { ok: true }
+    } catch (error) {
+      console.error('Failed to refresh heartbeats', error)
+      return { ok: false, error }
+    }
+  }, [familiar, setSettings])
 
   const loadSettings = useCallback(async () => {
     if (hasLoadedSettingsRef.current) {
@@ -268,9 +289,21 @@ export const useDashboardLifecycle = (state, options = {}) => {
     setSettings
   ])
 
+  useEffect(() => {
+    const previousSection = previousActiveSectionRef.current
+    previousActiveSectionRef.current = activeSection
+
+    if (!shouldRefreshHeartbeatsOnSectionOpen({ previousSection, activeSection })) {
+      return
+    }
+
+    void refreshHeartbeats()
+  }, [activeSection, refreshHeartbeats])
+
   return {
     refreshStorageUsage,
     refreshRecordingStatus,
+    refreshHeartbeats,
     loadSettings,
     refreshStorageUsageFromWindowOpen
   }

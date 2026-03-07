@@ -7,7 +7,7 @@ const {
 } = require('../../src/heartbeats/runner')
 const { ADAPTER_STATUS, DEFAULT_TIMEOUT_MS } = require('../../src/harness-adapters/types')
 
-const HEARTBEAT_PROMPT_SUFFIX = '\n do only what you are asked. dont ask any followup questions'
+const HEARTBEAT_PROMPT_SUFFIX = '\n do only what you are asked. dont ask any followup questions. if the user asks for a specific format, output only that format and nothing else'
 const HEARTBEAT_WORKSPACE_PATH = '/tmp'
 const WORKSPACE_RESTRICTION_SUFFIX = `\nyou must not create any files outside of the workspace ${HEARTBEAT_WORKSPACE_PATH}. ${HEARTBEAT_WORKSPACE_TEMP_FILE_WARNING}`
 const WORKSPACE_RESTRICTION_PHRASE = 'you must not create any files outside of the workspace'
@@ -84,6 +84,10 @@ test('createHeartbeatRunner includes workspace restriction phrase to keep genera
   assert.ok(
     input?.prompt.includes(WORKSPACE_RESTRICTION_PHRASE),
     'The workspace-file restriction phrase is required to reduce non-deterministic failures from temp-file writes outside the intended directory.'
+  )
+  assert.ok(
+    input?.prompt.includes('if the user asks for a specific format, output only that format and nothing else'),
+    'The shared heartbeat suffix must preserve user-requested output formats without extra wrapper text.'
   )
 })
 
