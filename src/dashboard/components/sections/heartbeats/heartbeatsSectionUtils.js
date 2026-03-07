@@ -31,7 +31,13 @@ export const getSafeTimezone = (value) => {
 
 export const resolveRunnerLabel = (value) => {
   const normalized = typeof value === 'string' ? value.toLowerCase() : ''
-  return normalized === 'claude-code' ? 'Claude Code' : 'Codex'
+  if (normalized === 'claude-code') {
+    return 'Claude Code'
+  }
+  if (normalized === 'cursor') {
+    return 'Cursor'
+  }
+  return 'Codex'
 }
 
 export const resolveFrequencyLabel = (value) => (value === 'weekly' ? 'Weekly' : 'Daily')

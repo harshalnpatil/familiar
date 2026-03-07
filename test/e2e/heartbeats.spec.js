@@ -249,6 +249,72 @@ test('heartbeats editing flow updates settings for create, edit, disable, and de
   }
 })
 
+test('cursor heartbeats keep the selected runner in storage and in the list badge', async () => {
+  const appRoot = path.join(__dirname, '../..')
+  const contextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-heartbeats-cursor-context-e2e-'))
+  const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-heartbeats-cursor-settings-e2e-'))
+  const settingsPath = path.join(settingsDir, 'settings.json')
+  const initialSettings = {
+    wizardCompleted: true,
+    contextFolderPath: contextPath,
+    skillInstaller: {
+      harness: ['cursor'],
+      installPath: ['/tmp/.cursor/skills/familiar']
+    },
+    heartbeats: { items: [] }
+  }
+
+  fs.writeFileSync(settingsPath, JSON.stringify(initialSettings, null, 2), 'utf-8')
+
+  const electronApp = await electron.launch({
+    args: buildLaunchArgs(),
+    cwd: appRoot,
+    env: {
+      ...process.env,
+      FAMILIAR_E2E: '1',
+      FAMILIAR_E2E_CONTEXT_PATH: contextPath,
+      FAMILIAR_SETTINGS_DIR: settingsDir
+    }
+  })
+
+  try {
+    const createdTime = toTimeInputValue(20)
+    const createdTopic = 'cursor heartbeat'
+    const createdPrompt = 'Summarize the most important work from the last day.'
+
+    const window = await electronApp.firstWindow()
+    await window.waitForLoadState('domcontentloaded')
+
+    await window.getByRole('tab', { name: 'Connect Agent' }).click()
+    await expect(window.locator('#settings-skill-harness-cursor')).toBeChecked()
+
+    await openHeartbeatsSection(window)
+    await window.locator('#heartbeats-add').click()
+    await expect(window.getByRole('dialog', { name: 'New Heartbeat' })).toBeVisible()
+    await window.locator('#heartbeat-topic').fill(createdTopic)
+    await window.locator('#heartbeat-prompt').fill(createdPrompt)
+    await window.locator('#heartbeat-runner').selectOption('cursor')
+    await window.locator('#heartbeat-time').fill(createdTime)
+    await saveHeartbeatForm(window)
+    await expect(window.getByRole('dialog', { name: 'New Heartbeat' })).toHaveCount(0)
+
+    await expectStoredHeartbeat(settingsPath, {
+      topic: 'cursor_heartbeat',
+      prompt: createdPrompt,
+      runner: 'cursor',
+      frequency: 'daily',
+      time: createdTime,
+      enabled: true
+    })
+
+    const heartbeatsSection = window.locator('#section-heartbeats')
+    await expect(heartbeatsSection.getByText('Cursor', { exact: true })).toBeVisible()
+    await expect(heartbeatsSection.getByText('Codex', { exact: true })).toHaveCount(0)
+  } finally {
+    await electronApp.close()
+  }
+})
+
 test('heartbeats tab refetches settings every time it is opened', async () => {
   const appRoot = path.join(__dirname, '../..')
   const contextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-heartbeats-refresh-context-e2e-'))
