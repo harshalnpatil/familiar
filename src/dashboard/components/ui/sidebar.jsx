@@ -1,12 +1,18 @@
 import React from 'react'
 
 import { cn } from '../../lib/utils'
+import dashboardShellTheme from '../dashboard/dashboardShellTheme.cjs'
+
+const {
+  dashboardSidebarClassName,
+  dashboardSidebarMenuButtonClassName
+} = dashboardShellTheme
 
 export function Sidebar({ className = '', ...props }) {
   return (
     <aside
       className={cn(
-        'w-[190px] h-full flex-none bg-zinc-50/90 dark:bg-zinc-900/60 border-r border-zinc-200 dark:border-zinc-800 flex flex-col',
+        dashboardSidebarClassName,
         className
       )}
       {...props}
@@ -39,10 +45,7 @@ export function SidebarMenuButton({ isActive = false, className = '', ...props }
     <button
       data-active={isActive ? 'true' : 'false'}
       className={cn(
-        'w-full flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium text-zinc-500 dark:text-zinc-400 transition-colors',
-        'hover:bg-zinc-100 dark:hover:bg-zinc-800/60 hover:text-zinc-900 dark:hover:text-zinc-200',
-        'data-[active=true]:bg-white data-[active=true]:text-zinc-900 data-[active=true]:border data-[active=true]:border-zinc-200/60 data-[active=true]:shadow-sm',
-        'dark:data-[active=true]:bg-zinc-800 dark:data-[active=true]:text-zinc-100 dark:data-[active=true]:border-zinc-700/60',
+        dashboardSidebarMenuButtonClassName,
         className
       )}
       {...props}

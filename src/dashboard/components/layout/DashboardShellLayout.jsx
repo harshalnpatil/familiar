@@ -1,5 +1,6 @@
 import React from 'react'
 
+import dashboardShellTheme from '../dashboard/dashboardShellTheme.cjs'
 import { Button } from '../ui/button'
 import {
   Sidebar,
@@ -10,6 +11,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '../ui/sidebar'
+
+const { dashboardShellRootClassName } = dashboardShellTheme
 
 export function DashboardShellLayout({
   activeSection,
@@ -99,7 +102,7 @@ export function DashboardShellLayout({
   }
 
   return (
-    <div className="relative h-full min-h-screen w-full flex">
+    <div className={dashboardShellRootClassName}>
       <Sidebar
         id="settings-sidebar"
         className={isWizardCompleted ? '' : 'hidden'}
