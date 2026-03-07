@@ -1,3 +1,5 @@
+const { microcopy, formatTemplate } = require('../microcopy')
+
 const DEFAULT_HEARTBEAT_TOPIC_LABEL = 'Heartbeat'
 
 const normalizeTopic = (topic) => {
@@ -6,9 +8,16 @@ const normalizeTopic = (topic) => {
 }
 
 const buildHeartbeatFailureToastBody = (topic) => {
-  return `heartbeat ${normalizeTopic(topic)} failed. for further information, check the logs`
+  return formatTemplate(microcopy.heartbeats.failureToast.bodyTemplate, {
+    topic: normalizeTopic(topic)
+  })
+}
+
+const getHeartbeatFailureToastActionLabel = () => {
+  return microcopy.heartbeats.failureToast.expandFailures
 }
 
 module.exports = {
-  buildHeartbeatFailureToastBody
+  buildHeartbeatFailureToastBody,
+  getHeartbeatFailureToastActionLabel
 }

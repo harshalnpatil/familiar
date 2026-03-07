@@ -31,6 +31,12 @@ const microcopy = {
     capturing: 'Capturing',
     idle: 'Idle'
   },
+  heartbeats: {
+    failureToast: {
+      bodyTemplate: 'heartbeat {{topic}} failed. expand failures for details.',
+      expandFailures: 'Expand Failures'
+    }
+  },
   dashboard: {
     errors: {
       reactInitializationFailed: 'Unable to initialize the React dashboard.'

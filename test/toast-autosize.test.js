@@ -175,9 +175,9 @@ test('toast sends closable flag to renderer payload by default', async () => {
     }
 });
 
-test('toast action open-familiar-log opens the configured path', async () => {
+test('toast action open-in-folder opens the configured path in Finder', async () => {
     const sentPayloads = [];
-    const openPathCalls = [];
+    const showItemInFolderCalls = [];
     const actionHandlers = {};
     const originalWarn = console.warn;
     console.warn = () => {};
@@ -238,10 +238,8 @@ test('toast action open-familiar-log opens the configured path', async () => {
             removeListener: () => {}
         },
         shell: {
-            showItemInFolder: () => {},
-            openPath: (value) => {
-                openPathCalls.push(value);
-                return Promise.resolve('');
+            showItemInFolder: (value) => {
+                showItemInFolderCalls.push(value);
             }
         },
     };
@@ -260,23 +258,23 @@ test('toast action open-familiar-log opens the configured path', async () => {
         const { showToast, destroyToast } = require('../src/toast');
         showToast({
             title: 'Test',
-            body: 'Heartbeat failed. for further information, check the logs',
+            body: 'Open the containing folder for this file.',
             size: 'large',
             duration: 10_000,
-            actions: [{ label: 'Open logs', action: 'open-familiar-log', data: '/tmp/familiar.log' }],
+            actions: [{ label: 'Open in Finder', action: 'open-in-folder', data: '/tmp/familiar.log' }],
             closable: true
         });
         await new Promise((resolve) => setImmediate(resolve));
 
         assert.equal(sentPayloads.length >= 1, true);
         assert.equal(sentPayloads[sentPayloads.length - 1].duration, 10_000);
-        assert.equal(openPathCalls.length, 0);
+        assert.equal(showItemInFolderCalls.length, 0);
 
         assert.equal(typeof actionHandlers['toast-action'], 'function');
-        actionHandlers['toast-action']({}, { action: 'open-familiar-log', data: '/tmp/familiar.log' });
+        actionHandlers['toast-action']({}, { action: 'open-in-folder', data: '/tmp/familiar.log' });
         await new Promise((resolve) => setImmediate(resolve));
 
-        assert.deepEqual(openPathCalls, ['/tmp/familiar.log']);
+        assert.deepEqual(showItemInFolderCalls, ['/tmp/familiar.log']);
 
         destroyToast();
     } finally {

@@ -188,11 +188,6 @@ if (ipcMain && typeof ipcMain.on === 'function') {
       hideToast()
       return
     }
-
-    if (action === 'open-familiar-log' && data) {
-      shell.openPath(data).catch(() => {})
-      hideToast()
-    }
   })
 }
 

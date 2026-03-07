@@ -12,11 +12,11 @@ const path = require('node:path');
 const { registerIpcHandlers } = require('./ipc');
 const { showWindow } = require('./utils/window');
 const { ensureHomebrewPath } = require('./utils/path');
-const { loadSettings, saveSettings, validateContextFolderPath, resolveSettingsDir } = require('./settings');
+const { loadSettings, saveSettings, validateContextFolderPath } = require('./settings');
 const { buildTrayMenuTemplate } = require('./menu');
 const { ensureFamiliarSkillAlignment } = require('./skills/familiar-skill-alignment');
 const { initLogging } = require('./logger');
-const { showToast } = require('./toast');
+const { showToast, hideToast } = require('./toast');
 const {
     createRecordingOffReminder,
     DEFAULT_RECORDING_OFF_REMINDER_DELAY_MS
@@ -46,7 +46,15 @@ const {
 } = require('./storage/auto-session-cleanup');
 const { createHeartbeatScheduler } = require('./heartbeats/scheduler');
 const { createHeartbeatHistoryStore } = require('./heartbeats/store');
-const { buildHeartbeatFailureToastBody } = require('./heartbeats/failure-toast');
+const {
+    buildHeartbeatFailureToastBody,
+    getHeartbeatFailureToastActionLabel
+} = require('./heartbeats/failure-toast');
+const {
+    OPEN_HEARTBEAT_FAILURE_DETAILS_ACTION,
+    openHeartbeatFailureDetails
+} = require('./heartbeats/failure-details');
+const { openHeartbeatRunTarget } = require('./heartbeats/open-run-target');
 const { openFileInTextEdit } = require('./utils/open-in-textedit');
 const { createRetentionChangeTrigger } = require('./storage/retention-change-trigger');
 const { moveFamiliarFolder } = require('./context-folder/move');
@@ -120,10 +128,6 @@ const maybeE2EToast = (payload = {}) => {
     }
     recordE2EToastEvent(payload);
     showToast(payload);
-};
-
-const resolveFamiliarLogPath = () => {
-    return path.join(resolveSettingsDir(), 'logs', 'familiar.log');
 };
 
 const isE2E = process.env.FAMILIAR_E2E === '1';
@@ -488,40 +492,19 @@ const notifyHeartbeatRunStateChanged = (payload = {}) => {
 };
 
 const openHeartbeatFromTray = async (entry = {}) => {
-    const status = typeof entry.status === 'string' ? entry.status.trim().toLowerCase() : '';
-    const outputPath = typeof entry.outputPath === 'string' ? entry.outputPath.trim() : '';
-    const targetPath = status === 'failed' ? resolveFamiliarLogPath() : outputPath;
     const rowId = Number(entry?.id);
 
-    if (!targetPath) {
-        console.error('Heartbeat tray open skipped: missing target path', {
-            heartbeatId: typeof entry.heartbeatId === 'string' ? entry.heartbeatId : '',
-            status
-        });
-        return;
-    }
-
     try {
-        if (isE2E) {
-            e2eTextEditOpenEvents.push({
-                heartbeatId: typeof entry.heartbeatId === 'string' ? entry.heartbeatId : '',
-                status,
-                targetPath,
-                at: Date.now()
-            });
-            console.log('Captured TextEdit open for E2E', {
-                heartbeatId: typeof entry.heartbeatId === 'string' ? entry.heartbeatId : '',
-                status,
-                targetPath
-            });
-        } else {
-            await openFileInTextEdit({ targetPath });
-
-            console.log('Opened heartbeat tray target', {
-                heartbeatId: typeof entry.heartbeatId === 'string' ? entry.heartbeatId : '',
-                status,
-                targetPath
-            });
+        const openResult = await openHeartbeatRunTarget({
+            entry,
+            isE2E,
+            e2eTextEditOpenEvents,
+            logger: console,
+            openFileInTextEditFn: openFileInTextEdit,
+            openHeartbeatFailureDetailsFn: openHeartbeatFailureDetails
+        });
+        if (!openResult?.ok) {
+            return openResult;
         }
 
         if (Number.isFinite(rowId) && rowId > 0) {
@@ -535,13 +518,13 @@ const openHeartbeatFromTray = async (entry = {}) => {
                 trayMenuController?.refreshTrayMenuFromSettings?.();
             }
         }
+        return openResult;
     } catch (error) {
         console.error('Failed to open heartbeat tray target', {
             heartbeatId: typeof entry.heartbeatId === 'string' ? entry.heartbeatId : '',
-            status,
-            targetPath,
             message: error?.message || String(error)
         });
+        return { ok: false, message: error?.message || 'Failed to open heartbeat tray target.' };
     }
 };
 
@@ -736,6 +719,20 @@ const registerMainProcessIpc = () => {
         event.returnValue = microcopy;
     });
 
+    ipcMain.on('toast-action', (_event, payload = {}) => {
+        if (payload?.action !== OPEN_HEARTBEAT_FAILURE_DETAILS_ACTION) {
+            return;
+        }
+
+        hideToast();
+        void openHeartbeatFailureDetails({
+            data: payload?.data,
+            isE2E,
+            e2eTextEditOpenEvents,
+            logger: console
+        });
+    });
+
     ipcMain.handle('screenStills:getStatus', () => {
         if (!screenStillsController) {
             const state = getCurrentScreenStillsState();
@@ -884,14 +881,22 @@ const registerMainProcessIpc = () => {
             return { ok: false, message: 'Heartbeat tray item not found.' };
         }
 
-        await openHeartbeatFromTray(target);
+        const openResult = await openHeartbeatFromTray(target);
+        if (!openResult?.ok) {
+            return {
+                ok: false,
+                rowId,
+                heartbeatId: typeof target.heartbeatId === 'string' ? target.heartbeatId : '',
+                message: openResult?.message || 'Failed to open heartbeat run.'
+            };
+        }
         return {
             ok: true,
             rowId,
             heartbeatId: typeof target.heartbeatId === 'string' ? target.heartbeatId : '',
-            targetPath: typeof target.status === 'string' && target.status.toLowerCase() === 'failed'
-                ? resolveFamiliarLogPath()
-                : (typeof target.outputPath === 'string' ? target.outputPath : '')
+            targetPath: typeof openResult?.targetPath === 'string' ? openResult.targetPath : '',
+            text: typeof openResult?.text === 'string' ? openResult.text : '',
+            mode: typeof openResult?.mode === 'string' ? openResult.mode : ''
         };
     });
 
@@ -996,9 +1001,11 @@ if (isPrimaryInstance) {
                     duration: 10_000,
                     actions: [
                         {
-                            label: 'Open logs',
-                            action: 'open-familiar-log',
-                            data: resolveFamiliarLogPath()
+                            label: getHeartbeatFailureToastActionLabel(),
+                            action: OPEN_HEARTBEAT_FAILURE_DETAILS_ACTION,
+                            data: {
+                                message: payload.message
+                            }
                         }
                     ]
                 })
