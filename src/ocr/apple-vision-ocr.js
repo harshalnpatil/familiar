@@ -77,13 +77,6 @@ const buildMarkdownLayoutFromOcr = ({
     `ocr_uses_language_correction: ${usesCorrection ? 'true' : 'false'}`,
     minConfidence === undefined ? null : `ocr_min_confidence: ${minConfidence}`,
     '---',
-    '# Layout Map',
-    `SCREEN ${resolution}`,
-    'GRID unknown',
-    width && height
-      ? `[CONTENT] (0,0)-(${width},${height}) text: "UNCLEAR (local OCR only; no layout inference)"`
-      : `[CONTENT] (x1,y1)-(x2,y2) text: "UNCLEAR (local OCR only; no layout inference)"`,
-    '',
     '# OCR',
     ocrBullets,
     ''

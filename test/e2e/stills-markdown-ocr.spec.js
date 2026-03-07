@@ -181,6 +181,7 @@ test('stills markdown worker uses local Apple Vision OCR helper (native binary)'
     const markdown = fs.readFileSync(expectedMarkdownPath, 'utf-8')
     expect(markdown).toContain('format: familiar-layout-v0')
     expect(markdown).toContain('extractor: apple-vision-ocr')
+    expect(markdown).not.toContain('# Layout Map')
     expect(markdown).toContain('# OCR')
     // Stable fallback from buildMarkdownLayoutFromOcr when OCR emits zero lines.
     expect(markdown).toContain('NO_TEXT_DETECTED')

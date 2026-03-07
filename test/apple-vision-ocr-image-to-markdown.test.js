@@ -51,7 +51,7 @@ test('apple-vision-ocr script: normalize helpers validate inputs', () => {
     assert.throws(() => normalizeMinConfidence('2'), /Invalid --min-confidence/);
 });
 
-test('apple-vision-ocr script: buildMarkdownLayoutFromOcr emits stable familiar layout skeleton', () => {
+test('apple-vision-ocr script: buildMarkdownLayoutFromOcr emits stable familiar OCR markdown', () => {
     const markdown = buildMarkdownLayoutFromOcr({
         imagePath: '/some/dir/screenshot.png',
         meta: {
@@ -69,6 +69,7 @@ test('apple-vision-ocr script: buildMarkdownLayoutFromOcr emits stable familiar 
     assert.ok(markdown.includes('extractor: apple-vision-ocr\n'));
     assert.ok(markdown.includes('source_image: screenshot.png\n'));
     assert.ok(markdown.includes('screen_resolution: 1200x800\n'));
+    assert.equal(markdown.includes('# Layout Map\n'), false);
     assert.ok(markdown.includes('# OCR\n'));
     assert.ok(markdown.includes('- "Hello \\"world\\""\n'));
     assert.ok(markdown.includes('- "Second line"\n'));
@@ -168,6 +169,7 @@ test('apple-vision-ocr script: runCli writes stable familiar markdown via helper
         assert.ok(markdown.includes('ocr_languages: en-US\n'));
         assert.ok(markdown.includes('ocr_uses_language_correction: false\n'));
         assert.ok(markdown.includes('ocr_min_confidence: 0.2\n'));
+        assert.equal(markdown.includes('# Layout Map\n'), false);
         assert.ok(markdown.includes('# OCR\n'));
         assert.ok(markdown.includes('- "Hello \\"world\\""\n'));
         assert.ok(markdown.includes('- "Second line"\n'));
