@@ -528,20 +528,31 @@ const createHeartbeatScheduler = ({
       topic: target.topic
     })
 
-    const result = await runHeartbeat({
-      heartbeat: target,
-      contextFolderPath,
-      scheduledAtMs,
-      trigger: 'manual',
-      attemptNumber: 1
-    })
-    return {
-      ok: result.ok,
-      status: result.status,
-      message: result.ok ? 'Heartbeat completed.' : result.error,
-      heartbeatId: target.id,
-      topic: target.topic,
-      outputPath: result.outputPath || null
+    const heartbeatHistoryStore = typeof heartbeatHistoryStoreFactory === 'function'
+      ? heartbeatHistoryStoreFactory({ contextFolderPath, logger })
+      : null
+
+    try {
+      const result = await runHeartbeat({
+        heartbeat: target,
+        contextFolderPath,
+        scheduledAtMs,
+        trigger: 'manual',
+        attemptNumber: 1,
+        heartbeatHistoryStore
+      })
+      return {
+        ok: result.ok,
+        status: result.status,
+        message: result.ok ? 'Heartbeat completed.' : result.error,
+        heartbeatId: target.id,
+        topic: target.topic,
+        outputPath: result.outputPath || null
+      }
+    } finally {
+      if (heartbeatHistoryStore && typeof heartbeatHistoryStore.close === 'function') {
+        heartbeatHistoryStore.close()
+      }
     }
   }
 

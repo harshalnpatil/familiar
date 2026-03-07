@@ -431,6 +431,51 @@ test('runHeartbeatNow emits running state lifecycle events', async () => {
   fs.rmSync(root, { recursive: true, force: true })
 })
 
+test('runHeartbeatNow records successful runs in heartbeat history', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'heartbeat-scheduler-'))
+  const settings = {
+    contextFolderPath: root,
+    heartbeats: {
+      items: [createHeartbeat({ id: 'hb-now', topic: 'run-now-topic' })]
+    }
+  }
+  const recordedRuns = []
+  let closeCalls = 0
+  const scheduler = createHeartbeatScheduler({
+    settingsLoader: () => settings,
+    settingsSaver: ({ heartbeats }) => {
+      settings.heartbeats = heartbeats
+    },
+    heartbeatHistoryStoreFactory: () => ({
+      recordHeartbeatRun: (payload) => {
+        recordedRuns.push(payload)
+      },
+      close: () => {
+        closeCalls += 1
+      }
+    }),
+    runner: {
+      runPrompt: async () => ({
+        status: ADAPTER_STATUS.OK,
+        answer: 'immediate result'
+      })
+    },
+    nowFn: () => Date.UTC(2026, 2, 5, 12, 0, 0)
+  })
+
+  const result = await scheduler.runHeartbeatNow({ heartbeatId: 'hb-now' })
+
+  assert.equal(result.ok, true)
+  assert.equal(recordedRuns.length, 1)
+  assert.equal(recordedRuns[0].heartbeatId, 'hb-now')
+  assert.equal(recordedRuns[0].status, HEARTBEAT_HISTORY_STATUS.COMPLETED)
+  assert.equal(typeof recordedRuns[0].outputPath, 'string')
+  assert.equal(recordedRuns[0].errorMessage, null)
+  assert.equal(closeCalls, 1)
+
+  fs.rmSync(root, { recursive: true, force: true })
+})
+
 test('runDueHeartbeats skips heartbeat when due slot is not newer than last attempt', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'heartbeat-scheduler-'))
   const settings = {
