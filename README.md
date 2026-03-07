@@ -22,7 +22,7 @@ How did Opus 4.6 know so much about us? Sure, it's a smart cookie that has [con
 
 ## What is Familiar? 
 
-Familiar is a desktop Mac app that takes everything that passes through your screen (and clipboard) and saves it as context for your existing AI (OpenClaw, Claude Cowork, Claude Code, Codex, Cursor, Antigravity, you name it).
+Familiar is a desktop Mac app that takes everything that passes through your screen and clipboard text and saves it as context for your existing AI (OpenClaw, Claude Cowork, Claude Code, Codex, Cursor, Antigravity, you name it).
 
 **Familiar is free, open source, and offline.**
 
@@ -54,7 +54,7 @@ The answers are good, and they get better with every passing minute.
 
 1.  Familiar looks at your screen every few seconds and converts it to text using Apple's native OCR.
 
-2.  It also saves everything that passes through your clipboard (this includes most third-party speech-to-text tools, too)
+2.  It also saves clipboard text (this includes most third-party speech-to-text tools, too)
 
 3.  All these text files go in a local folder of your choosing (we recommend placing `/familiar/` inside wherever you work with your AI agent)
 
@@ -312,8 +312,7 @@ _Credit: Sumant Subrahmanya_
 
 - Settings: `~/.familiar/settings.json`
 - Captured still images: `<contextFolderPath>/familiar/stills/`
-- Clipboard image mirrors while recording: `<contextFolderPath>/familiar/stills/<sessionId>/<timestamp>.clipboard.<ext>`
-- Extracted markdown (including OCR output for clipboard images): `<contextFolderPath>/familiar/stills-markdown/`
+- Extracted markdown for captured still images: `<contextFolderPath>/familiar/stills-markdown/`
 - Clipboard text mirrors while recording: `<contextFolderPath>/familiar/stills-markdown/<sessionId>/<timestamp>.clipboard.txt`
 - Before still markdown and clipboard text are written, Familiar runs `rg`-based redaction for password/API-key patterns. If the scanner fails twice, Familiar still saves the file and shows a one-time warning toast per recording session.
 

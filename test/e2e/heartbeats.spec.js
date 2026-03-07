@@ -182,9 +182,9 @@ test('heartbeats editing flow updates settings for create, edit, disable, and de
 
     await window.locator('#heartbeats-add').click()
     await expect(window.getByRole('dialog', { name: 'New Heartbeat' })).toBeVisible()
-    await window.locator('#heartbeat-topic').fill('blocked antigravity heartbeat')
-    await window.locator('#heartbeat-prompt').fill('This should be rejected because Antigravity is not enabled.')
-    await window.locator('#heartbeat-runner').selectOption('antigravity')
+    await window.locator('#heartbeat-topic').fill('blocked cursor heartbeat')
+    await window.locator('#heartbeat-prompt').fill('This should be rejected because Cursor is not enabled.')
+    await window.locator('#heartbeat-runner').selectOption('cursor')
     await saveHeartbeatForm(window)
     await expect(window.getByText(invalidRunnerError).first()).toBeVisible()
     await expect.poll(() => readSettings(settingsPath)?.heartbeats?.items?.length ?? 0).toBe(1)
