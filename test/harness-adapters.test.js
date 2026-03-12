@@ -274,6 +274,42 @@ test('cursor adapter returns error when cursor-agent output is malformed JSON', 
   assert.match(result.message, /json/i)
 })
 
+test('cursor adapter tolerates non-json preamble before the final JSON payload', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-adapter-cursor-preamble-'))
+  const contextFolderPath = path.join(root, 'context')
+  fs.mkdirSync(contextFolderPath, { recursive: true })
+
+  const adapter = createCursorAdapter({
+    logger: createLogger(),
+    resolveExecutablePathImpl: async () => '/Applications/Cursor.app/Contents/Resources/app/bin/cursor-agent',
+    runCommandImpl: async () => ({
+      ok: true,
+      code: 0,
+      signal: null,
+      stdout: [
+        'warning: warming up cursor agent',
+        '{',
+        '  "result": "cursor final answer",',
+        '  "is_error": false',
+        '}'
+      ].join('\n'),
+      stderr: '',
+      timedOut: false,
+      durationMs: 24,
+      error: null
+    })
+  })
+
+  const result = await adapter.runPrompt({
+    prompt: 'hello',
+    contextFolderPath,
+    timeoutMs: 10
+  })
+
+  assert.equal(result.status, ADAPTER_STATUS.OK)
+  assert.equal(result.answer, 'cursor final answer')
+})
+
 test('cursor adapter checkAvailability maps ENOENT to unavailable', async () => {
   const adapter = createCursorAdapter({
     logger: createLogger(),

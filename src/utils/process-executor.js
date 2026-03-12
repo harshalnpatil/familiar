@@ -24,6 +24,41 @@ const runCommand = async ({
   const normalizedArgs = Array.isArray(args) ? args : []
   const normalizedTimeoutMs = normalizeTimeoutMs(timeoutMs)
 
+  const killChild = ({ child, signal, logger, command, cwd, args }) => {
+    if (!child) {
+      return
+    }
+
+    if (Number.isInteger(child.pid) && child.pid > 0) {
+      try {
+        process.kill(-child.pid, signal)
+        return
+      } catch (error) {
+        logger.warn('Harness adapter process group kill failed', {
+          command,
+          args,
+          cwd: cwd || null,
+          pid: child.pid,
+          signal,
+          message: error?.message || String(error)
+        })
+      }
+    }
+
+    try {
+      child.kill(signal)
+    } catch (error) {
+      logger.warn('Harness adapter child kill failed', {
+        command,
+        args,
+        cwd: cwd || null,
+        pid: child.pid || null,
+        signal,
+        message: error?.message || String(error)
+      })
+    }
+  }
+
   return await new Promise((resolve) => {
     let settled = false
     let timedOut = false
@@ -55,7 +90,8 @@ const runCommand = async ({
     try {
       child = spawnImpl(command, normalizedArgs, {
         cwd,
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
+        detached: true
       })
     } catch (error) {
       settle({
@@ -77,9 +113,23 @@ const runCommand = async ({
         cwd: cwd || null,
         timeoutMs: normalizedTimeoutMs
       })
-      child.kill('SIGTERM')
+      killChild({
+        child,
+        signal: 'SIGTERM',
+        logger,
+        command,
+        cwd,
+        args: normalizedArgs
+      })
       forceKillId = setTimeout(() => {
-        child.kill('SIGKILL')
+        killChild({
+          child,
+          signal: 'SIGKILL',
+          logger,
+          command,
+          cwd,
+          args: normalizedArgs
+        })
       }, FORCE_KILL_GRACE_MS)
     }, normalizedTimeoutMs)
 
@@ -123,5 +173,6 @@ const runCommand = async ({
 }
 
 module.exports = {
+  FORCE_KILL_GRACE_MS,
   runCommand
 }

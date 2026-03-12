@@ -19,6 +19,35 @@ const createMeta = ({ startedAt, durationMs, workspaceDir } = {}) => ({
   workspaceDir
 })
 
+const parseJsonSuffix = (output) => {
+  const normalizedOutput = typeof output === 'string' ? output.trim() : ''
+  if (!normalizedOutput) {
+    return null
+  }
+
+  try {
+    return JSON.parse(normalizedOutput)
+  } catch (_error) {
+    const candidateIndexes = []
+    for (let index = 0; index < normalizedOutput.length; index += 1) {
+      const char = normalizedOutput[index]
+      if (char === '{' || char === '[') {
+        candidateIndexes.push(index)
+      }
+    }
+
+    for (const index of candidateIndexes) {
+      try {
+        return JSON.parse(normalizedOutput.slice(index))
+      } catch (_innerError) {
+        continue
+      }
+    }
+  }
+
+  return null
+}
+
 const parseCursorAnswer = (stdout) => {
   const normalizedOutput = typeof stdout === 'string' ? stdout.trim() : ''
   if (!normalizedOutput) {
@@ -29,14 +58,12 @@ const parseCursorAnswer = (stdout) => {
     }
   }
 
-  let parsed
-  try {
-    parsed = JSON.parse(normalizedOutput)
-  } catch (error) {
+  const parsed = parseJsonSuffix(normalizedOutput)
+  if (!parsed) {
     return {
       ok: false,
       answer: '',
-      message: error?.message || 'Cursor returned invalid JSON.'
+      message: 'Cursor returned invalid JSON.'
     }
   }
 

@@ -43,6 +43,28 @@ test('resolveExecutablePath uses a login zsh shell to resolve the executable pat
   assert.equal(call.timeoutMs, DEFAULT_RESOLVE_EXECUTABLE_TIMEOUT_MS)
 })
 
+test('resolveExecutablePath selects the path line that contains the requested executable name', async () => {
+  const resolvedPath = await resolveExecutablePath('codex', {
+    logger: createLogger(),
+    runCommandImpl: async () => ({
+      ok: true,
+      code: 0,
+      signal: null,
+      stdout: [
+        'sourcing /Users/maximvovshin/.zshrc',
+        'warning: cache lives at /tmp/zsh-cache',
+        'resolved binary: /Users/maximvovshin/.nvm/versions/node/v22.21.1/bin/codex'
+      ].join('\n'),
+      stderr: '',
+      timedOut: false,
+      durationMs: 7,
+      error: null
+    })
+  })
+
+  assert.equal(resolvedPath, '/Users/maximvovshin/.nvm/versions/node/v22.21.1/bin/codex')
+})
+
 test('resolveExecutablePath returns empty when the login shell cannot resolve the command', async () => {
   const resolvedPath = await resolveExecutablePath('codex', {
     logger: createLogger(),
