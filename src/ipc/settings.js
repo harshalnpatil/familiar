@@ -11,9 +11,14 @@ const {
 const { resolveHarnessSkillPath } = require('../skills/installer');
 const { createRecorder } = require('../screen-stills/recorder');
 const { resolveAutoCleanupRetentionDays } = require('../storage/auto-cleanup-retention');
+const {
+  normalizeCapturePrivacySettings
+} = require('../screen-stills/capture-privacy');
+const { listInstalledApps, getInstalledAppIconDataUrl } = require('../apps/installed-apps');
 
 let onSettingsSaved = null;
 let onMoveContextFolder = null;
+const installedAppIconCache = new Map();
 const PROBE_RECORDER_WINDOW_NAME = 'familiar-permission-probe-';
 const PERMISSION_PROBE_TIMEOUT_MS = 12_000;
 let permissionProbeRecorder = null;
@@ -144,6 +149,8 @@ function registerSettingsHandlers(options = {}) {
     ipcMain.handle('settings:save', handleSaveSettings);
     ipcMain.handle('settings:pickContextFolder', handlePickContextFolder);
     ipcMain.handle('settings:moveContextFolder', handleMoveContextFolder);
+    ipcMain.handle('settings:listInstalledApps', handleListInstalledApps);
+    ipcMain.handle('settings:getInstalledAppIcon', handleGetInstalledAppIcon);
     ipcMain.handle('settings:checkScreenRecordingPermission', handleCheckScreenRecordingPermission);
     ipcMain.handle('settings:requestScreenRecordingPermission', handleRequestScreenRecordingPermission);
     ipcMain.handle('settings:openScreenRecordingSettings', handleOpenScreenRecordingSettings);
@@ -165,6 +172,7 @@ function handleGetSettings() {
         const heartbeats = settings?.heartbeats && typeof settings.heartbeats === 'object'
             ? settings.heartbeats
             : { items: [] };
+        const capturePrivacy = normalizeCapturePrivacySettings(settings?.capturePrivacy);
         let validationMessage = '';
 
         if (contextFolderPath) {
@@ -189,6 +197,7 @@ function handleGetSettings() {
                 installPath: skillInstallerInstallPath,
             },
             heartbeats,
+            capturePrivacy,
             appVersion
         };
     } catch (error) {
@@ -201,6 +210,7 @@ function handleGetSettings() {
             wizardCompleted: false,
             skillInstaller: { harness: [], installPath: [] },
             heartbeats: { items: [] },
+            capturePrivacy: normalizeCapturePrivacySettings(),
             appVersion
         };
     }
@@ -213,6 +223,7 @@ function handleSaveSettings(_event, payload) {
     const hasWizardCompleted = Object.prototype.hasOwnProperty.call(payload || {}, 'wizardCompleted');
     const hasSkillInstaller = Object.prototype.hasOwnProperty.call(payload || {}, 'skillInstaller');
     const hasHeartbeats = Object.prototype.hasOwnProperty.call(payload || {}, 'heartbeats');
+    const hasCapturePrivacy = Object.prototype.hasOwnProperty.call(payload || {}, 'capturePrivacy');
     const settingsPayload = {};
 
     if (
@@ -222,6 +233,7 @@ function handleSaveSettings(_event, payload) {
         !hasWizardCompleted &&
         !hasSkillInstaller
         && !hasHeartbeats
+        && !hasCapturePrivacy
     ) {
         return { ok: false, message: 'No settings provided.' };
     }
@@ -276,6 +288,10 @@ function handleSaveSettings(_event, payload) {
         settingsPayload.heartbeats = { items };
     }
 
+    if (hasCapturePrivacy) {
+        settingsPayload.capturePrivacy = normalizeCapturePrivacySettings(payload?.capturePrivacy);
+    }
+
     try {
         const saveResult = saveSettings(settingsPayload);
         if (saveResult) {
@@ -294,6 +310,65 @@ function handleSaveSettings(_event, payload) {
     } catch (error) {
         console.error('Failed to save settings', error);
         return { ok: false, message: 'Failed to save settings.' };
+    }
+}
+
+async function handleListInstalledApps() {
+    try {
+        return {
+            ok: true,
+            apps: await listInstalledApps({ logger: console })
+        };
+    } catch (error) {
+        console.error('Failed to list installed apps', error);
+        return {
+            ok: false,
+            message: error?.message || 'Failed to list installed apps.',
+            apps: []
+        };
+    }
+}
+
+async function handleGetInstalledAppIcon(_event, payload) {
+    const appPath = typeof payload?.appPath === 'string' ? payload.appPath.trim() : '';
+    const iconPath = typeof payload?.iconPath === 'string' ? payload.iconPath.trim() : '';
+    const cacheKey = `${appPath}::${iconPath}`;
+    if (!appPath) {
+        return {
+            ok: true,
+            iconDataUrl: null
+        };
+    }
+
+    if (installedAppIconCache.has(cacheKey)) {
+        return {
+            ok: true,
+            iconDataUrl: installedAppIconCache.get(cacheKey)
+        };
+    }
+
+    try {
+        const iconDataUrl = await getInstalledAppIconDataUrl({
+            appPath,
+            iconPath,
+            getFileIcon: (targetPath, options) => app.getFileIcon(targetPath, options),
+            logger: console
+        });
+        installedAppIconCache.set(cacheKey, iconDataUrl);
+        return {
+            ok: true,
+            iconDataUrl
+        };
+    } catch (error) {
+        console.error('Failed to get installed app icon', {
+            appPath,
+            message: error?.message || String(error)
+        });
+        return {
+            ok: false,
+            message: error?.message || 'Failed to load installed app icon.',
+            iconDataUrl: null
+        };
     }
 }
 

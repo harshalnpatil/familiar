@@ -28,7 +28,7 @@ export const useDashboardState = ({ familiar, microcopy = {}, formatters = null 
     disabledLabel: 'Capture disabled'
   }
 
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [recordingStatus, setRecordingStatus] = useState({
     state: 'disabled',
     manualPaused: false,
@@ -225,6 +225,11 @@ export const useDashboardState = ({ familiar, microcopy = {}, formatters = null 
             ? next.contextFolderPath
             : DEFAULT_SETTINGS.contextFolderPath,
         alwaysRecordWhenActive: Boolean(next.alwaysRecordWhenActive),
+        capturePrivacy: {
+          blacklistedApps: Array.isArray(next?.capturePrivacy?.blacklistedApps)
+            ? next.capturePrivacy.blacklistedApps
+            : DEFAULT_SETTINGS.capturePrivacy.blacklistedApps
+        },
         storageAutoCleanupRetentionDays:
           resolveAutoCleanupRetentionDays(next.storageAutoCleanupRetentionDays),
         wizardCompleted: next.wizardCompleted === true,

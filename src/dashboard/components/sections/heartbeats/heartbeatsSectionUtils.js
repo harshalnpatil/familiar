@@ -2,13 +2,6 @@ import { HEARTBEAT_DEFAULT_TIMEZONE } from '../../dashboard/dashboardConstants'
 
 export const toSafeItems = (value) => (Array.isArray(value) ? value : [])
 
-export const getLabel = (mc, entry = {}, fallback = '') => {
-  if (entry && typeof entry.label === 'string' && entry.label.length > 0) {
-    return entry.label
-  }
-  return fallback
-}
-
 export const nowMinutes = () => {
   const now = new Date()
   const hour = String(now.getHours()).padStart(2, '0')
@@ -45,7 +38,7 @@ export const resolveFrequencyLabel = (value) => (value === 'weekly' ? 'Weekly' :
 export const resolveDayLabel = (value, labelLookup) => {
   const parsed = Number.parseInt(value, 10)
   const match = labelLookup.find((entry) => Number.parseInt(entry.value, 10) === parsed)
-  return match?.label || 'Monday'
+  return match?.label || labelLookup[0]?.label || ''
 }
 
 export const resolveLastRunText = (entry, toDisplayText, copy = {}) => {

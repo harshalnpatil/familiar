@@ -23,6 +23,7 @@ const isPermissionGrantedFromStatus = (permissionStatus, permissionGranted) => {
 export const useDashboardCapture = (state) => {
   const {
     familiar,
+    mc,
     recordingStatus,
     setStatusBusySafe,
     setRecordingStatus,
@@ -68,23 +69,23 @@ export const useDashboardCapture = (state) => {
         const permissionStatus = toDisplayText(nextPermissionState.permissionStatus)
         setRecordingStatus((previous) => ({
           ...previous,
-          permissionStatus: permissionStatus || 'unknown',
+          permissionStatus: permissionStatus || previous.permissionStatus,
           permissionGranted: nextPermissionState.permissionGranted
         }))
         return {
           permissionCheckState: nextPermissionCheckState,
           permissionGranted: nextPermissionState.permissionGranted,
-          permissionStatus: permissionStatus || 'unknown'
+          permissionStatus: permissionStatus || recordingStatus.permissionStatus
         }
       }
       return {
         permissionCheckState: nextPermissionCheckState,
         permissionGranted: false,
-        permissionStatus: 'unknown'
+        permissionStatus: recordingStatus.permissionStatus
       }
     } catch (error) {
       console.error('Failed to check permissions', error)
-      setRecordingError('Failed to check screen recording permission.')
+      setRecordingError(mc.dashboard.settings.errors.failedToCheckScreenRecordingPermission)
       setRecordingStatus((previous) => ({ ...previous, permissionGranted: false, permissionStatus: 'denied' }))
       setPermissionCheckState('denied')
       return { permissionCheckState: 'denied', permissionGranted: false, permissionStatus: 'denied' }
@@ -104,7 +105,7 @@ export const useDashboardCapture = (state) => {
     const isActive = recordingStatus.enabled && !recordingStatus.manualPaused
     const handler = isActive ? familiar.pauseScreenStills : familiar.startScreenStills
     if (typeof handler !== 'function') {
-      setRecordingError('Capture bridge unavailable. Restart the app.')
+      setRecordingError(mc.dashboard.settings.errors.captureBridgeUnavailableRestart)
       return
     }
 
@@ -112,7 +113,7 @@ export const useDashboardCapture = (state) => {
     try {
       const result = await handler()
       if (result && result.ok === false) {
-        setRecordingError(result.message || 'Failed to update capture state.')
+        setRecordingError(result.message || mc.dashboard.settings.errors.failedToUpdateCaptureState)
       } else {
         setRecordingMessage('')
         if (refreshRecordingStatusSafe) {
@@ -121,7 +122,7 @@ export const useDashboardCapture = (state) => {
       }
     } catch (error) {
       console.error('Failed to toggle capture', error)
-      setRecordingError('Failed to update capture state.')
+      setRecordingError(mc.dashboard.settings.errors.failedToUpdateCaptureState)
     } finally {
       setStatusBusySafe(false)
     }

@@ -42,16 +42,12 @@ export function WizardSection({
   recordingStatus
 }) {
   const html = mc.dashboard?.html || {}
-  const sections = mc.dashboard?.sections || {}
-  const wizardSection = sections.wizard || {}
-  const wizardSkill = mc.dashboard?.wizardSkill || {}
-  const wizardSkillMessages = wizardSkill.messages || {}
+  const wizardSkillMessages = mc.dashboard?.wizardSkill?.messages || {}
 
   const isPermissionCheckGranted = permissionCheckState === 'granted'
   const isPermissionCheckDenied = permissionCheckState === 'denied'
   const isCheckingPermissions = permissionCheckState === 'checking'
   const openScreenRecordingLabel = toDisplayText(html.wizardEnableFamiliarInScreenRecording)
-    || 'Enable Familiar In Screen Recording'
   const checkPermissionsLabel = isCheckingPermissions
     ? mc.dashboard.stills.checkingPermissions
     : isPermissionCheckGranted
@@ -68,64 +64,55 @@ export function WizardSection({
   const displayedSkillStatus = skillStatusMessage || toDisplayText(wizardMessage)
 
   const wizardStepLabel = (step) => ({
-    1: toDisplayText(html.wizardStepContext) || 'Context',
-    2: toDisplayText(html.wizardStepPermissions) || 'Permissions',
-    3: toDisplayText(html.wizardStepInstallSkill) || 'Skills',
-    4: toDisplayText(html.wizardStepComplete) || 'Complete'
+    1: toDisplayText(html.wizardStepContext),
+    2: toDisplayText(html.wizardStepPermissions),
+    3: toDisplayText(html.wizardStepInstallSkill),
+    4: toDisplayText(html.wizardStepComplete)
   }[step] || '')
 
   const wizardClaudeCoworkGuideSteps = [
-    toDisplayText(html.wizardClaudeCoworkGuideStep1) || 'Open Settings from the top left corner (or press: ⌘ + , ).',
-    toDisplayText(html.wizardClaudeCoworkGuideStep2) || 'Go to Capabilities.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep3) || 'Toggle on Allow network egress.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep4) || 'Go back to the Cowork landing page (chat view).',
-    toDisplayText(html.wizardClaudeCoworkGuideStep5) || 'Click plus sign (+) -> Plugins -> Add Plugin.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep6) || 'Go to Personal tab.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep7) || 'Click plus sign (+) -> Add marketplace from GitHub.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep8)
-      || 'Paste https://github.com/familiar-software/familiar-claude-cowork-skill.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep9) || 'Click Sync.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep10) || 'Open the added marketplace and install the Familiar skill.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep11)
-      || 'Go back to the Cowork landing page and choose a work folder that contains Familiar context.',
-    toDisplayText(html.wizardClaudeCoworkGuideStep12) || 'Start a new Cowork session and invoke /familiar ....'
+    toDisplayText(html.wizardClaudeCoworkGuideStep1),
+    toDisplayText(html.wizardClaudeCoworkGuideStep2),
+    toDisplayText(html.wizardClaudeCoworkGuideStep3),
+    toDisplayText(html.wizardClaudeCoworkGuideStep4),
+    toDisplayText(html.wizardClaudeCoworkGuideStep5),
+    toDisplayText(html.wizardClaudeCoworkGuideStep6),
+    toDisplayText(html.wizardClaudeCoworkGuideStep7),
+    toDisplayText(html.wizardClaudeCoworkGuideStep8),
+    toDisplayText(html.wizardClaudeCoworkGuideStep9),
+    toDisplayText(html.wizardClaudeCoworkGuideStep10),
+    toDisplayText(html.wizardClaudeCoworkGuideStep11),
+    toDisplayText(html.wizardClaudeCoworkGuideStep12)
   ]
 
   const wizardFaq = [
     {
-      question: toDisplayText(html.wizardFaqQuestionSensitiveData) || 'Will it capture passwords or embarrassing searches?',
+      question: toDisplayText(html.wizardFaqQuestionSensitiveData),
       answer: toDisplayText(html.wizardFaqAnswerSensitiveData)
-        || 'No.',
     },
     {
-      question: toDisplayText(html.wizardFaqQuestionLeavesComputer) || 'Does anything leave my computer?',
+      question: toDisplayText(html.wizardFaqQuestionLeavesComputer),
       answer: toDisplayText(html.wizardFaqAnswerLeavesComputer)
-        || 'You control your data. Familiar does NOT share any information.',
     },
     {
-      question: toDisplayText(html.wizardFaqQuestionStorage) || 'How much space does it take?',
+      question: toDisplayText(html.wizardFaqQuestionStorage),
       answer: toDisplayText(html.wizardFaqAnswerStorage)
-        || 'Overtime storage is kept small with cleanup.',
     },
     {
-      question: toDisplayText(html.wizardFaqQuestionPerformance) || 'Will it slow down my Mac or battery?',
+      question: toDisplayText(html.wizardFaqQuestionPerformance),
       answer: toDisplayText(html.wizardFaqAnswerPerformance)
-        || 'There is some overhead, but not usually noticeable.',
     },
     {
-      question: toDisplayText(html.wizardFaqQuestionPauseIdle) || 'Can I pause it / does it stop when I’m idle?',
+      question: toDisplayText(html.wizardFaqQuestionPauseIdle),
       answer: toDisplayText(html.wizardFaqAnswerPauseIdle)
-        || 'You can pause capture manually, and capture is active-aware.',
     },
     {
-      question: toDisplayText(html.wizardFaqQuestionAudio) || 'Does it record meetings/audio?',
+      question: toDisplayText(html.wizardFaqQuestionAudio),
       answer: toDisplayText(html.wizardFaqAnswerAudio)
-        || 'No.',
     },
     {
-      question: toDisplayText(html.wizardFaqQuestionScreenshotFrequency) || 'How often does Familiar take a screenshot?',
+      question: toDisplayText(html.wizardFaqQuestionScreenshotFrequency),
       answer: toDisplayText(html.wizardFaqAnswerScreenshotFrequency)
-        || 'Low Power mode: 15s, otherwise 5s.',
     },
   ]
 
@@ -149,17 +136,15 @@ export function WizardSection({
     return 'text-zinc-500 dark:text-zinc-400'
   }
 
-  const getLabel = (value, fallback) => toDisplayText(value) || fallback
-
   return (
       <section id="section-wizard" className="relative flex-1 flex flex-col min-h-0">
         <div className="flex-none px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/50 flex justify-between items-center">
           <div className="w-full text-center">
             <CardTitle>
-              {getLabel(html.wizardHeaderTitle, getLabel(wizardSection.title, 'Setup Wizard'))}
+              {toDisplayText(html.wizardHeaderTitle)}
             </CardTitle>
             <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
-              {getLabel(html.wizardHeaderSubtitle, 'Guided setup in four steps.')}
+              {toDisplayText(html.wizardHeaderSubtitle)}
             </p>
           </div>
         </div>
@@ -250,32 +235,26 @@ export function WizardSection({
       </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 scrollbar-slim">
-          <div className="max-w-[360px] mx-auto space-y-5" data-wizard-step="1" hidden={wizardStep !== 1}>
+        <div className="max-w-[360px] mx-auto space-y-5" data-wizard-step="1" hidden={wizardStep !== 1}>
           <div className="text-center space-y-1">
             <CardTitle>
-              {getLabel(html.wizardChooseContextFolderTitle, 'Choose your context folder')}
+              {toDisplayText(html.wizardChooseContextFolderTitle)}
             </CardTitle>
             <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
-              {getLabel(
-                html.wizardChooseContextFolderDescription,
-                'Familiar stores everything inside <Context Folder>/familiar/.'
-              )}
+              {toDisplayText(html.wizardChooseContextFolderDescription)}
             </p>
             <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
               <span className="font-semibold text-zinc-700 dark:text-zinc-200">
-                {getLabel(html.wizardChooseContextFolderBestPracticesLabel, 'Best Practices:')}
+                {toDisplayText(html.wizardChooseContextFolderBestPracticesLabel)}
               </span>
               {' '}
-              {getLabel(
-                html.wizardChooseContextFolderBestPractices,
-                'Use the same folder with which you usually work with agents.'
-              )}
+              {toDisplayText(html.wizardChooseContextFolderBestPractices)}
             </p>
           </div>
           <section className="space-y-2">
             <div className="flex items-center">
               <Label htmlFor="wizard-context-folder-path" className="section-label">
-                {getLabel(html.wizardContextFolder, 'Context Folder')}
+                {toDisplayText(html.wizardContextFolder)}
               </Label>
             </div>
             <div className="input-ring flex items-center gap-2 px-3 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
@@ -288,7 +267,7 @@ export function WizardSection({
                 id="wizard-context-folder-path"
                 data-setting="context-folder-path"
                 type="text"
-                placeholder={getLabel(html.wizardContextFolderPlaceholderNoFolderSelected, 'No folder selected')}
+                placeholder={toDisplayText(html.wizardContextFolderPlaceholderNoFolderSelected)}
                 readOnly
                 value={wizardContextFolderPath || displayedContextFolderPath || mc.general?.unknown}
                 className="flex-1 bg-transparent text-[14px] font-medium text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
@@ -304,7 +283,7 @@ export function WizardSection({
                   void pickContextFolder(false)
                 }}
               >
-                {getLabel(html.wizardContextFolderChange, mc.dashboard.settingsActions.pickFolder)}
+                {toDisplayText(html.wizardContextFolderChange)}
               </Button>
             </div>
             <p
@@ -322,13 +301,10 @@ export function WizardSection({
         <div className="max-w-[360px] mx-auto space-y-5" data-wizard-step="2" hidden={wizardStep !== 2}>
           <div className="text-center space-y-1">
             <CardTitle>
-              {getLabel(html.wizardEnableCapturingTitle, 'Enable Capturing')}
+              {toDisplayText(html.wizardEnableCapturingTitle)}
             </CardTitle>
             <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
-              {getLabel(
-                html.wizardEnableCapturingDescription,
-                'Captures a still while you are active, and stops when idle. Requires Screen Recording permission.'
-              )}
+              {toDisplayText(html.wizardEnableCapturingDescription)}
             </p>
           </div>
           <div data-component-source="permissions" className="space-y-5">
@@ -365,10 +341,7 @@ export function WizardSection({
               data-open-screen-recording-settings-note
               className={`text-[14px] font-semibold text-zinc-500 dark:text-zinc-400 ${isPermissionCheckDenied ? '' : 'hidden'}`}
             >
-              {getLabel(
-                html.wizardAfterEnablingRestartFamiliar,
-                'Enable access to capture while active in Screen Recording settings.'
-              )}
+              {toDisplayText(html.wizardAfterEnablingRestartFamiliar)}
             </p>
             <section
               id="wizard-recording-toggle-section"
@@ -401,10 +374,10 @@ export function WizardSection({
         <div className="max-w-[360px] mx-auto space-y-5" data-wizard-step="3" hidden={wizardStep !== 3}>
           <div className="text-center space-y-1">
             <CardTitle>
-              {getLabel(html.wizardInstallSkillTitle, getLabel(wizardSkill.title, 'Set up Familiar in your tools'))}
+              {toDisplayText(html.wizardInstallSkillTitle)}
             </CardTitle>
             <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
-              {getLabel(html.wizardInstallSkillDescription, 'Pick where Familiar should be available.')}
+              {toDisplayText(html.wizardInstallSkillDescription)}
             </p>
           </div>
           <div data-component-source="install-skill" className="space-y-5">
@@ -437,14 +410,14 @@ export function WizardSection({
                       </span>
                       <span className="skill-picker-label">
                         {entry.value === 'claude'
-                          ? getLabel(html.wizardHarnessClaudeCode, entry.label)
+                          ? toDisplayText(html.wizardHarnessClaudeCode)
                           : entry.value === 'cloud-cowork'
-                            ? getLabel(html.wizardHarnessClaudeCowork, entry.label)
+                            ? toDisplayText(html.wizardHarnessClaudeCowork)
                             : entry.value === 'codex'
-                              ? getLabel(html.wizardHarnessCodex, entry.label)
+                              ? toDisplayText(html.wizardHarnessCodex)
                               : entry.value === 'antigravity'
-                                ? getLabel(html.wizardHarnessAntigravity, entry.label)
-                                : getLabel(html.wizardHarnessCursor, entry.label)}
+                                ? toDisplayText(html.wizardHarnessAntigravity)
+                                : toDisplayText(html.wizardHarnessCursor)}
                       </span>
                     </span>
                     {entry.value === 'cursor' && (
@@ -453,7 +426,7 @@ export function WizardSection({
                         data-skill-cursor-restart-note
                         className={`skill-picker-note ${selectedSet.has('cursor') ? '' : 'hidden'}`}
                       >
-                        {toDisplayText(wizardSkillMessages.cursorRestartNote) || 'Restart Cursor for the skill to take effect.'}
+                        {toDisplayText(wizardSkillMessages.cursorRestartNote)}
                       </span>
                     )}
                   </Label>
@@ -499,13 +472,10 @@ export function WizardSection({
               <div className="w-full max-w-[520px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3 shadow-lg">
                 <div className="space-y-1">
                   <CardTitle>
-                    {getLabel(
-                      html.wizardClaudeCoworkGuideTitle,
-                      getLabel(wizardSkill.title, 'Claude Cowork install guide')
-                    )}
+                    {toDisplayText(html.wizardClaudeCoworkGuideTitle)}
                   </CardTitle>
                   <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
-                    {getLabel(html.wizardClaudeCoworkGuideSubtitle, 'Use marketplace installation in Cowork.')}
+                    {toDisplayText(html.wizardClaudeCoworkGuideSubtitle)}
                   </p>
                 </div>
                 <ol className="text-[14px] text-zinc-600 dark:text-zinc-300 space-y-1 list-decimal pl-4">
@@ -527,7 +497,7 @@ export function WizardSection({
                       void copyClaudeCoworkGuideLink()
                     }}
                   >
-                    {getLabel(html.wizardClaudeCoworkGuideCopyLink, 'Copy Link')}
+                    {toDisplayText(html.wizardClaudeCoworkGuideCopyLink)}
                   </Button>
                   <Button
                     id="wizard-cloud-cowork-done"
@@ -537,7 +507,7 @@ export function WizardSection({
                     className="px-3 py-1.5 text-[14px] font-semibold bg-indigo-600 hover:bg-indigo-700 border border-indigo-600 hover:border-indigo-700 rounded-md text-white transition-colors cursor-pointer"
                     onClick={hideClaudeCoworkGuide}
                   >
-                    {getLabel(html.wizardClaudeCoworkGuideDone, 'Done')}
+                    {toDisplayText(html.wizardClaudeCoworkGuideDone)}
                   </Button>
                 </div>
                 <p
@@ -565,21 +535,18 @@ export function WizardSection({
         <div className="max-w-[360px] mx-auto space-y-5" data-wizard-step="4" hidden={wizardStep !== 4}>
           <div className="text-center space-y-2">
             <CardTitle>
-              {getLabel(html.wizardAllSetTitle, "You're all set")}
+              {toDisplayText(html.wizardAllSetTitle)}
             </CardTitle>
             <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
-              {getLabel(
-                html.wizardAllSetDescription,
-                'Your context folder and capturing preferences are configured, and the skill install completed.'
-              )}
+              {toDisplayText(html.wizardAllSetDescription)}
             </p>
           </div>
           <section className="space-y-2">
             <CardTitle>
-              {getLabel(html.wizardFaqTitle, 'FAQ')}
+              {toDisplayText(html.wizardFaqTitle)}
             </CardTitle>
             <p className="text-[14px] text-zinc-400 dark:text-zinc-500 text-center">
-              {getLabel(html.wizardFaqScrollHint, 'Scroll down to see all FAQs')}
+              {toDisplayText(html.wizardFaqScrollHint)}
             </p>
             <Accordion type="single" collapsible className="space-y-2">
               {wizardFaq.map((entry, index) => (
@@ -610,7 +577,7 @@ export function WizardSection({
           onClick={goWizardBack}
           disabled={wizardStep <= 1}
         >
-          {getLabel(html.wizardBack, 'Back')}
+          {toDisplayText(html.wizardBack)}
         </Button>
         <div className="flex items-center gap-2">
           <span
@@ -618,7 +585,7 @@ export function WizardSection({
             className={`text-[14px] text-zinc-400 whitespace-nowrap ${canAdvance ? 'hidden' : ''}`}
             aria-live="polite"
           >
-            {getLabel(mc.dashboard.wizard?.completeStepToContinue, 'Complete this step to continue.')}
+            {toDisplayText(mc.dashboard.wizard?.completeStepToContinue)}
           </span>
           <Button
             id="wizard-next"
@@ -628,7 +595,7 @@ export function WizardSection({
             disabled={wizardStep >= 4 || !canAdvance}
             hidden={wizardStep >= 4}
           >
-            {getLabel(html.wizardNext, 'Next')}
+            {toDisplayText(html.wizardNext)}
           </Button>
           <Button
             id="wizard-done"
@@ -638,7 +605,7 @@ export function WizardSection({
             disabled={wizardStep < 4 || !canAdvance}
             hidden={wizardStep < 4}
           >
-            {getLabel(mc.actions?.wizardDone, 'Done')}
+            {toDisplayText(mc.actions?.wizardDone)}
           </Button>
         </div>
       </div>

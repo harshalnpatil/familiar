@@ -2,10 +2,113 @@ import React from 'react'
 
 import { Button } from '../ui/button'
 import { ButtonGroup } from '../ui/button-group'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
+import { Input } from '../ui/input'
+import { buildCapturePrivacyAppKey } from '../dashboard/capturePrivacyAppUtils'
 import { resolveRecordingIndicatorVisuals } from '../dashboard/dashboardUtils'
+
+const INSTALLED_APPS_VIEWPORT_STYLE = { maxHeight: '28.25rem' }
+const INSTALLED_APP_ROW_STYLE = { minHeight: '5.25rem' }
+
+function InstalledAppIcon({ iconDataUrl, label }) {
+  if (iconDataUrl) {
+    return (
+      <img
+        src={iconDataUrl}
+        alt=""
+        aria-hidden="true"
+        className="h-11 w-11 rounded-xl border border-zinc-200 bg-white object-cover p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      />
+    )
+  }
+
+  return (
+    <div
+      aria-hidden="true"
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-100 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+    >
+      {(label || '?').slice(0, 2)}
+    </div>
+  )
+}
+
+function InstalledAppOptionRow({
+  app,
+  index,
+  checked,
+  onCheckedChange,
+  iconDataUrl,
+  requestInstalledAppIcon,
+  viewportRef,
+  unknownLabel
+}) {
+  const rowRef = React.useRef(null)
+  const label = app.name || app.bundleId || unknownLabel || 'Unknown'
+
+  React.useEffect(() => {
+    if (typeof requestInstalledAppIcon !== 'function' || !app?.appPath) {
+      return undefined
+    }
+
+    const element = rowRef.current
+    if (!element) {
+      return undefined
+    }
+    if (typeof IntersectionObserver !== 'function') {
+      void requestInstalledAppIcon(app)
+      return undefined
+    }
+
+    let didRequest = false
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) {
+        return
+      }
+      if (!didRequest) {
+        didRequest = true
+        void requestInstalledAppIcon(app)
+      }
+      observer.disconnect()
+    }, {
+      root: viewportRef?.current || null,
+      rootMargin: '120px 0px 120px 0px',
+      threshold: 0.01
+    })
+    observer.observe(element)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [app, requestInstalledAppIcon, viewportRef])
+
+  const checkboxId = `recording-installed-app-${index}`
+
+  return (
+    <label
+      ref={rowRef}
+      htmlFor={checkboxId}
+      className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950"
+      style={INSTALLED_APP_ROW_STYLE}
+    >
+      <Checkbox
+        id={checkboxId}
+        checked={checked}
+        onChange={(event) => {
+          void onCheckedChange(event.target.checked)
+        }}
+      />
+      <InstalledAppIcon iconDataUrl={iconDataUrl} label={label} />
+      <div className="min-w-0 space-y-1">
+        <p className="text-[14px] font-medium text-zinc-900 dark:text-zinc-100">{label}</p>
+        {app.bundleId ? (
+          <p className="break-all text-[12px] text-zinc-500 dark:text-zinc-400">{app.bundleId}</p>
+        ) : null}
+      </div>
+    </label>
+  )
+}
 
 export function RecordingSection({
   mc,
@@ -22,7 +125,19 @@ export function RecordingSection({
   copyLogMessage,
   copyLogError,
   permissionCheckState,
-  copyLogBusy
+  copyLogBusy,
+  installedApps,
+  filteredInstalledApps,
+  installedAppsLoading,
+  installedAppsError,
+  appSearchQuery,
+  setAppSearchQuery,
+  installedAppIcons,
+  capturePrivacyMessage,
+  capturePrivacyError,
+  refreshInstalledApps,
+  setBlacklistedAppEnabled,
+  requestInstalledAppIcon
 }) {
   const htmlCopy = mc?.dashboard?.html || {}
   const isPermissionCheckGranted = permissionCheckState === 'granted'
@@ -47,9 +162,20 @@ export function RecordingSection({
     permissionStatus: recordingStatus?.permissionStatus,
     copy: mc?.dashboard?.recordingIndicator || {}
   })
-  const recordingStatusText = toDisplayText(recordingIndicator.label) || 'Off'
+  const recordingStatusText = toDisplayText(recordingIndicator.label)
   const recordingDotClass = recordingIndicator.dotClass || 'bg-zinc-400'
   const recordingIndicatorStatus = recordingIndicator.status || 'off'
+  const blacklistedApps = Array.isArray(settings?.capturePrivacy?.blacklistedApps)
+    ? settings.capturePrivacy.blacklistedApps
+    : []
+  const blacklistedAppKeys = new Set(
+    blacklistedApps
+      .map((app) => buildCapturePrivacyAppKey(app))
+      .filter(Boolean)
+  )
+  const installedAppsByKey = new Map(
+    installedApps.map((app) => [buildCapturePrivacyAppKey(app), app])
+  )
   const statusBadgeStyleMap = {
     off: 'border-zinc-200 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200',
     paused: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300',
@@ -60,6 +186,29 @@ export function RecordingSection({
   const statusBadgeClasses =
     statusBadgeStyleMap[recordingIndicatorStatus] ||
     statusBadgeStyleMap.off
+  const installedAppsViewportRef = React.useRef(null)
+  const getInstalledAppIconDataUrl = (app) => {
+    const appKey = buildCapturePrivacyAppKey(app)
+    return appKey ? installedAppIcons?.[appKey]?.iconDataUrl || null : null
+  }
+
+  React.useEffect(() => {
+    if (typeof requestInstalledAppIcon !== 'function' || blacklistedApps.length === 0) {
+      return
+    }
+
+    for (const selectedApp of blacklistedApps) {
+      const selectedAppKey = buildCapturePrivacyAppKey(selectedApp)
+      if (!selectedAppKey || installedAppIcons?.[selectedAppKey]) {
+        continue
+      }
+
+      const matchingInstalledApp = installedAppsByKey.get(selectedAppKey)
+      if (matchingInstalledApp?.appPath) {
+        void requestInstalledAppIcon(matchingInstalledApp)
+      }
+    }
+  }, [blacklistedApps, installedAppIcons, installedAppsByKey, requestInstalledAppIcon])
 
   return (
     <section id="section-recording" className="space-y-6">
@@ -129,6 +278,143 @@ export function RecordingSection({
           {toDisplayText(recordingMessage)}
         </span>
       </section>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {toDisplayText(htmlCopy.recordingBlacklistTitle)}
+          </CardTitle>
+          <CardDescription>
+            {toDisplayText(htmlCopy.recordingBlacklistDescription)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {blacklistedApps.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-[14px] font-medium text-zinc-900 dark:text-zinc-100">
+                {toDisplayText(htmlCopy.recordingBlacklistedAppsTitle)}
+              </p>
+              <div className="grid gap-2">
+                {blacklistedApps.map((app, index) => {
+                  const label = app.name || app.bundleId || mc.general?.unknown || 'Unknown'
+                  return (
+                    <div
+                      key={`${buildCapturePrivacyAppKey(app) || `${app.bundleId || 'name'}-${app.name || index}`}-selected`}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <InstalledAppIcon iconDataUrl={getInstalledAppIconDataUrl(app)} label={label} />
+                        <div className="min-w-0">
+                          <p className="text-[14px] font-medium text-zinc-900 dark:text-zinc-100">{label}</p>
+                          {app.bundleId ? (
+                            <p className="break-all text-[12px] text-zinc-500 dark:text-zinc-400">{app.bundleId}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          void setBlacklistedAppEnabled(app, false)
+                        }}
+                      >
+                        {toDisplayText(htmlCopy.recordingBlacklistedAppRemove)}
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
+              {toDisplayText(htmlCopy.recordingInstalledAppsDescription)}
+            </p>
+            <Button
+              id="recording-refresh-installed-apps"
+              variant="outline"
+              size="sm"
+              disabled={installedAppsLoading}
+              onClick={() => {
+                void refreshInstalledApps()
+              }}
+            >
+              {installedAppsLoading
+                ? toDisplayText(htmlCopy.recordingInstalledAppsRefreshing)
+                : mc.dashboard.settingsActions.refresh}
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            <Input
+              id="recording-installed-app-search"
+              value={appSearchQuery}
+              placeholder={toDisplayText(htmlCopy.recordingInstalledAppsSearchPlaceholder)}
+              onChange={(event) => {
+                setAppSearchQuery(event.target.value)
+              }}
+            />
+            {installedAppsError ? (
+              <p className="text-[14px] text-red-600 dark:text-red-400" role="alert">
+                {toDisplayText(installedAppsError)}
+              </p>
+            ) : null}
+            {!installedAppsError && installedApps.length === 0 && !installedAppsLoading ? (
+              <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
+                {toDisplayText(htmlCopy.recordingInstalledAppsEmpty)}
+              </p>
+            ) : null}
+            {!installedAppsError && installedApps.length > 0 && filteredInstalledApps.length === 0 ? (
+              <p className="text-[14px] text-zinc-500 dark:text-zinc-400">
+                {toDisplayText(htmlCopy.recordingInstalledAppsNoSearchResults)}
+              </p>
+            ) : null}
+            {filteredInstalledApps.length > 0 ? (
+              <div
+                ref={installedAppsViewportRef}
+                className="overflow-y-auto pr-1 scrollbar-slim"
+                style={INSTALLED_APPS_VIEWPORT_STYLE}
+              >
+                <div className="grid gap-2">
+                  {filteredInstalledApps.map((app, index) => {
+                    const checked = blacklistedAppKeys.has(buildCapturePrivacyAppKey(app))
+                    return (
+                      <InstalledAppOptionRow
+                        key={buildCapturePrivacyAppKey(app) || `${app.bundleId || 'name'}-${app.name || index}`}
+                        app={app}
+                        index={index}
+                        checked={checked}
+                        onCheckedChange={(enabled) => setBlacklistedAppEnabled(app, enabled)}
+                        iconDataUrl={getInstalledAppIconDataUrl(app)}
+                        requestInstalledAppIcon={requestInstalledAppIcon}
+                        viewportRef={installedAppsViewportRef}
+                        unknownLabel={mc.general?.unknown}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <span
+            id="recording-capture-privacy-status"
+            className={`text-[14px] text-emerald-600 dark:text-emerald-400 ${toDisplayText(capturePrivacyMessage) ? '' : 'hidden'}`}
+            aria-live="polite"
+          >
+            {toDisplayText(capturePrivacyMessage)}
+          </span>
+          <span
+            id="recording-capture-privacy-error"
+            className={`text-[14px] text-red-600 dark:text-red-400 ${toDisplayText(capturePrivacyError) ? '' : 'hidden'}`}
+            role="alert"
+            aria-live="polite"
+          >
+            {toDisplayText(capturePrivacyError)}
+          </span>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

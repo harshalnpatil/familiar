@@ -13,8 +13,6 @@ import { Label } from '../../ui/label'
 import { Select } from '../../ui/select'
 import { Textarea } from '../../ui/textarea'
 
-import { getLabel } from './heartbeatsSectionUtils'
-
 export function HeartbeatForm({
   mc,
   draft,
@@ -96,13 +94,13 @@ export function HeartbeatForm({
                 onChange={(event) => {
                   setDraft((previous) => ({ ...previous, runner: event.target.value }))
                 }}
-              >
-                {runnerLookup.map((entry) => (
-                  <option key={entry.value} value={entry.value}>
-                    {getLabel(mc?.dashboard?.heartbeats, entry, entry.label)}
-                  </option>
-                ))}
-              </Select>
+                >
+                  {runnerLookup.map((entry) => (
+                    <option key={entry.value} value={entry.value}>
+                      {entry.label}
+                    </option>
+                  ))}
+                </Select>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
@@ -122,7 +120,7 @@ export function HeartbeatForm({
                 >
                   {frequencyLookup.map((entry) => (
                     <option key={entry.value} value={entry.value}>
-                      {getLabel(mc?.dashboard?.heartbeats, entry, entry.label)}
+                      {entry.label}
                     </option>
                   ))}
                 </Select>

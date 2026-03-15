@@ -28,13 +28,8 @@ class DashboardErrorBoundaryInner extends React.Component {
     if (!this.state.hasError) {
       return this.props.children
     }
-    const appName =
-      toDisplayText(this.props.microcopy?.app?.name) ||
-      toDisplayText(this.props.microcopy?.dashboard?.html?.appName) ||
-      'Familiar'
-    const errorTitle =
-      toDisplayText(this.props.microcopy?.dashboard?.errors?.reactInitializationFailed) ||
-      'Unable to initialize the React dashboard.'
+    const appName = toDisplayText(this.props.microcopy?.app?.name)
+    const errorTitle = toDisplayText(this.props.microcopy?.dashboard?.errors?.reactInitializationFailed)
 
     return (
       <div className="react-fallback">

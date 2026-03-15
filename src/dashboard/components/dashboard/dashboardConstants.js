@@ -38,10 +38,13 @@ export const DEFAULT_MICROCOPY = {
         failedToSaveSetting: 'Failed to save setting.',
         failedToLoadSettings: 'Failed to load settings.',
         bridgeUnavailableRestart: 'Settings bridge unavailable. Restart the app.',
+        captureBridgeUnavailableRestart: 'Capture bridge unavailable. Restart the app.',
         failedToOpenFolderPicker: 'Failed to open folder picker.',
         failedToMoveContextFolder: 'Failed to move context folder.',
         logCopyUnavailableRestart: 'Log copy unavailable. Restart the app.',
         failedToCopyLogFile: 'Failed to copy log file.',
+        failedToCheckScreenRecordingPermission: 'Failed to check screen recording permission.',
+        failedToUpdateCaptureState: 'Failed to update capture state.',
         storageCleanupUnavailableRestart: 'Storage cleanup unavailable. Restart the app.',
         failedToDeleteFiles: 'Failed to delete files.',
         failedToLoadStorageUsage: 'Failed to load storage usage.'
@@ -165,6 +168,9 @@ export const DEFAULT_SETTINGS = {
   appVersion: '',
   contextFolderPath: '',
   alwaysRecordWhenActive: false,
+  capturePrivacy: {
+    blacklistedApps: []
+  },
   storageAutoCleanupRetentionDays: 2,
   wizardCompleted: false,
   heartbeats: { items: [] }

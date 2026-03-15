@@ -29,7 +29,7 @@ const resolveMessage = (value, fallback = '') => {
     return String(value)
   }
   if (value instanceof Error) {
-    return value.message || fallback
+    return typeof value.message === 'string' ? value.message : fallback
   }
   if (typeof value === 'object' && typeof value.message === 'string') {
     return value.message
@@ -63,8 +63,8 @@ export const useDashboardHeartbeats = (state) => {
   const messages = mc?.dashboard?.heartbeats?.messages || {}
   const errors = mc?.dashboard?.heartbeats?.errors || {}
   const settingsErrors = mc?.dashboard?.settings?.errors || {}
-  const defaultStatusSaving = mc?.dashboard?.settings?.statusSaving || 'Saving…'
-  const defaultStatusSaved = mc?.dashboard?.settings?.statusSaved || 'Saved.'
+  const defaultStatusSaving = mc?.dashboard?.settings?.statusSaving
+  const defaultStatusSaved = mc?.dashboard?.settings?.statusSaved
 
   const heartbeats = toSafeItems(settings?.heartbeats?.items)
 
@@ -72,8 +72,8 @@ export const useDashboardHeartbeats = (state) => {
     const shouldShowStatus = options.showStatus !== false
 
     if (!familiar || typeof familiar.saveSettings !== 'function') {
-      setHeartbeatError(settingsErrors.bridgeUnavailableRestart || 'Bridge unavailable. Restart the app.')
-      return { ok: false, message: settingsErrors.bridgeUnavailableRestart || 'Bridge unavailable. Restart the app.' }
+      setHeartbeatError(settingsErrors.bridgeUnavailableRestart)
+      return { ok: false, message: settingsErrors.bridgeUnavailableRestart }
     }
 
     if (shouldShowStatus) {
@@ -88,9 +88,10 @@ export const useDashboardHeartbeats = (state) => {
     try {
       const result = await familiar.saveSettings({ heartbeats: { items: nextItems } })
       if (!result || result.ok !== true) {
-      setHeartbeatMessage('')
-      setHeartbeatError(result?.message || errors.failedToSave || messages.failedToSave || 'Failed to save heartbeat.')
-      return { ok: false, message: result?.message || errors.failedToSave || messages.failedToSave || 'Failed to save heartbeat.' }
+        const message = result?.message || errors.failedToSave || messages.failedToSave
+        setHeartbeatMessage('')
+        setHeartbeatError(message)
+        return { ok: false, message }
       }
 
       setSettings((previous) => ({
@@ -106,9 +107,10 @@ export const useDashboardHeartbeats = (state) => {
       return { ok: true }
     } catch (error) {
       console.error('Failed to save heartbeats', error)
+      const message = errors.failedToSave || messages.failedToSave
       setHeartbeatMessage('')
-      setHeartbeatError(errors.failedToSave || messages.failedToSave || 'Failed to save heartbeat.')
-      return { ok: false, message: errors.failedToSave || messages.failedToSave || 'Failed to save heartbeat.' }
+      setHeartbeatError(message)
+      return { ok: false, message }
     }
   }, [defaultStatusSaved, defaultStatusSaving, errors.failedToSave, messages.failedToSave, familiar, setHeartbeatError, setHeartbeatMessage, setSettings, setStorageError, setStorageMessage, settingsErrors.bridgeUnavailableRestart])
 
@@ -258,7 +260,7 @@ export const useDashboardHeartbeats = (state) => {
 
   const runHeartbeatNow = useCallback(async (heartbeatId) => {
     if (!familiar || typeof familiar.runHeartbeatNow !== 'function') {
-      const message = settingsErrors.bridgeUnavailableRestart || 'Bridge unavailable. Restart the app.'
+      const message = settingsErrors.bridgeUnavailableRestart
       setHeartbeatError(message)
       return { ok: false, message }
     }
@@ -301,7 +303,7 @@ export const useDashboardHeartbeats = (state) => {
 
   const openHeartbeatsFolder = useCallback(async () => {
     if (!familiar || typeof familiar.openHeartbeatsFolder !== 'function') {
-      const message = settingsErrors.bridgeUnavailableRestart || 'Bridge unavailable. Restart the app.'
+      const message = settingsErrors.bridgeUnavailableRestart
       setHeartbeatError(message)
       return { ok: false, message }
     }

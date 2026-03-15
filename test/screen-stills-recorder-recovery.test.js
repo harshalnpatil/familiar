@@ -26,6 +26,7 @@ const MOCK_THUMBNAIL_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCA
 const MOCK_THUMBNAIL_PNG_DATA_URL = `data:image/png;base64,${MOCK_THUMBNAIL_PNG_BASE64}`;
 const MOCK_THUMBNAIL_PNG_BUFFER = Buffer.from(MOCK_THUMBNAIL_PNG_BASE64, 'base64');
 const MOCK_INVALID_THUMBNAIL_BUFFER = Buffer.from([0x12, 0x34, 0x56]);
+const MOCK_CAPTURE_IMAGE_BUFFER = Buffer.from('mock-capture-image');
 
 function createDeterministicLowPowerModeMonitor({ enabled = false } = {}) {
   return {
@@ -115,7 +116,7 @@ test('recorder.start force-resets and retries once when renderer reports capture
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -302,7 +303,7 @@ test('recorder.start recreates the capture window when force-stop fails, then re
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -469,7 +470,7 @@ test('recorder resolves capture thumbnail from data URL when toPNG is not PNG', 
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -609,7 +610,7 @@ test('recorder fails to start when source thumbnail is unavailable', async () =>
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -750,7 +751,7 @@ test('recorder fails when thumbnail resize throws and does not start', async () 
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -923,7 +924,7 @@ test('recorder follows cursor display and switches capture source between monito
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -1086,7 +1087,7 @@ test('recorder refreshes capture thumbnail payload when source stays the same', 
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -1251,7 +1252,7 @@ test('recorder falls back to primary display source when cursor display source i
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -1647,7 +1648,7 @@ test('recorder attaches app metadata from before/after window detection', async 
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -1800,7 +1801,7 @@ test('recorder fails when active window detection throws before capture', async 
           ipcMain.emit('screen-stills:status', {}, {
             requestId: payload.requestId,
             status: 'captured',
-            filePath: payload.filePath
+            imageBuffer: MOCK_CAPTURE_IMAGE_BUFFER
           });
         });
       }
@@ -1891,17 +1892,17 @@ test('recorder fails when active window detection throws before capture', async 
       })
     });
 
-    await assert.rejects(
-      recorder.start({ contextFolderPath: '/tmp/familiar-test' }),
-      /No active window detected from helper output/
-    );
+    const result = await recorder.start({ contextFolderPath: '/tmp/familiar-test' });
 
+    assert.equal(result.ok, true);
     assert.equal(queueEnqueues.length, 0);
     assert.equal(startCalls, 1);
     assert.equal(getSourcesCalls, 1);
-    assert.equal(stopCalls, 1);
+    assert.equal(stopCalls, 0);
     assert.equal(captureCalls, 0);
     assert.equal(detectCalls, 1);
+
+    await recorder.stop({ reason: 'test' });
   } finally {
     Module._load = originalLoad;
     resetRecorderModule();

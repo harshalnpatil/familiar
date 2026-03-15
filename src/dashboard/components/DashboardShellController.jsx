@@ -6,6 +6,7 @@ import {
   buildDashboardNavigation,
 } from './dashboard/DashboardShellNavigation'
 import { useDashboardCapture } from './dashboard/useDashboardCapture'
+import { useDashboardCapturePrivacy } from './dashboard/useDashboardCapturePrivacy'
 import { useDashboardLifecycle } from './dashboard/useDashboardLifecycle'
 import { useDashboardSkills } from './dashboard/useDashboardSkills'
 import { useDashboardState } from './dashboard/useDashboardState'
@@ -36,6 +37,7 @@ function DashboardShellController({ familiar, microcopy = {}, formatters = null 
     ...core,
     refreshRecordingStatus: lifecycle.refreshRecordingStatus
   })
+  const capturePrivacy = useDashboardCapturePrivacy(core)
   const heartbeats = useDashboardHeartbeats(core)
   const storage = useDashboardStorage(core, lifecycle)
   const updates = useDashboardUpdates(core)
@@ -80,8 +82,7 @@ function DashboardShellController({ familiar, microcopy = {}, formatters = null 
 
   const navigation = buildDashboardNavigation(core.mc)
   const availableSectionIds = navigation.map((entry) => entry.id)
-  const wizardCompleteMessage =
-    core.mc.dashboard?.wizard?.completeStepToContinue || 'Please complete the setup wizard first.'
+  const wizardCompleteMessage = core.mc.dashboard?.wizard?.completeStepToContinue
 
   const setStorageSection = useCallback(
     (nextSection) => {
@@ -118,12 +119,8 @@ function DashboardShellController({ familiar, microcopy = {}, formatters = null 
         isWizardCompleted={core.isWizardCompleted}
         globalMessage={core.globalMessage}
         globalError={core.globalError}
-        appName={core.mc.app?.name || core.mc.dashboard?.html?.appName}
-        updatesCheckForUpdatesLabel={toDisplayText(
-          core.mc.dashboard?.updates?.checkForUpdatesLabel ||
-            core.mc.dashboard?.html?.updatesCheckForUpdates ||
-            'Check for updates'
-        )}
+        appName={core.mc.app?.name}
+        updatesCheckForUpdatesLabel={toDisplayText(core.mc.dashboard?.updates?.checkForUpdatesLabel)}
         onCheckForUpdates={updates.checkForUpdates}
         isCheckingForUpdates={core.isCheckingForUpdates}
         updateMessage={core.updateMessage}
@@ -182,7 +179,19 @@ function DashboardShellController({ familiar, microcopy = {}, formatters = null 
           copyDebugLog: storage.copyDebugLog,
           copyLogBusy: core.isCopyingDebugLog,
           copyLogMessage: core.copyLogMessage,
-          copyLogError: core.copyLogError
+          copyLogError: core.copyLogError,
+          installedApps: capturePrivacy.installedApps,
+          filteredInstalledApps: capturePrivacy.filteredInstalledApps,
+          installedAppsLoading: capturePrivacy.installedAppsLoading,
+          installedAppsError: capturePrivacy.installedAppsError,
+          appSearchQuery: capturePrivacy.appSearchQuery,
+          setAppSearchQuery: capturePrivacy.setAppSearchQuery,
+          installedAppIcons: capturePrivacy.installedAppIcons,
+          capturePrivacyMessage: capturePrivacy.capturePrivacyMessage,
+          capturePrivacyError: capturePrivacy.capturePrivacyError,
+          refreshInstalledApps: capturePrivacy.refreshInstalledApps,
+          setBlacklistedAppEnabled: capturePrivacy.setBlacklistedAppEnabled,
+          requestInstalledAppIcon: capturePrivacy.requestInstalledAppIcon
         }}
         installSectionProps={{
           mc: core.mc,

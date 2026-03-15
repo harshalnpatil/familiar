@@ -5,6 +5,7 @@ const os = require('node:os');
 const { SETTINGS_DIR_NAME, SETTINGS_FILE_NAME } = require('./const');
 const { normalizeStringArray } = require('./utils/list');
 const { resolveAutoCleanupRetentionDays } = require('./storage/auto-cleanup-retention');
+const { normalizeCapturePrivacySettings } = require('./screen-stills/capture-privacy');
 
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -128,6 +129,7 @@ const saveSettings = (settings, options = {}) => {
     const hasWizardCompleted = Object.prototype.hasOwnProperty.call(settings, 'wizardCompleted');
     const hasSkillInstaller = Object.prototype.hasOwnProperty.call(settings, 'skillInstaller');
     const hasHeartbeats = Object.prototype.hasOwnProperty.call(settings, 'heartbeats');
+    const hasCapturePrivacy = Object.prototype.hasOwnProperty.call(settings, 'capturePrivacy');
     const hasFamiliarSkillInstalledVersion = Object.prototype.hasOwnProperty.call(
         settings,
         'familiarSkillInstalledVersion'
@@ -135,6 +137,8 @@ const saveSettings = (settings, options = {}) => {
     const existingSkillInstaller =
         existing && typeof existing.skillInstaller === 'object' ? existing.skillInstaller : {};
     const existingHeartbeats = existing && typeof existing.heartbeats === 'object' ? existing.heartbeats : {};
+    const existingCapturePrivacy =
+        existing && typeof existing.capturePrivacy === 'object' ? existing.capturePrivacy : {};
     const contextFolderPath = hasContextFolderPath
         ? typeof settings.contextFolderPath === 'string'
             ? settings.contextFolderPath
@@ -206,6 +210,12 @@ const saveSettings = (settings, options = {}) => {
         payload.heartbeats = { items };
     } else if (Array.isArray(existingHeartbeats.items)) {
         payload.heartbeats = { items: existingHeartbeats.items };
+    }
+
+    if (hasCapturePrivacy) {
+        payload.capturePrivacy = normalizeCapturePrivacySettings(settings.capturePrivacy);
+    } else if (Object.keys(existingCapturePrivacy).length > 0) {
+        payload.capturePrivacy = normalizeCapturePrivacySettings(existingCapturePrivacy);
     }
 
     if (hasFamiliarSkillInstalledVersion) {

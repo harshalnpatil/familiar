@@ -9,6 +9,7 @@ const execFileAsync = promisify(execFile);
 const DEFAULT_MIN_VISIBLE_AREA = 3000;
 const DEFAULT_ARGS = ['--json', '--min-visible-area', String(DEFAULT_MIN_VISIBLE_AREA)];
 const FILE_EXISTS_OPTIONS = fs.constants.F_OK;
+const E2E_VISIBLE_WINDOWS_ENV_KEY = 'FAMILIAR_E2E_VISIBLE_WINDOWS_JSON';
 
 const fileExists = async (candidatePath) => {
   if (!candidatePath) {
@@ -131,6 +132,29 @@ const parseWindowList = (value) => {
     .filter((candidate) => candidate !== null);
 };
 
+const readVisibleWindowsOverride = ({ logger = console } = {}) => {
+  const raw = process.env[E2E_VISIBLE_WINDOWS_ENV_KEY];
+  if (typeof raw !== 'string' || raw.trim().length === 0) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      logger.warn('Ignoring invalid visible windows override; expected array payload.');
+      return [];
+    }
+    return parsed
+      .map(normalizeWindowCandidate)
+      .filter((candidate) => candidate !== null);
+  } catch (error) {
+    logger.warn('Ignoring invalid visible windows override JSON', {
+      error: error?.message || String(error)
+    });
+    return [];
+  }
+};
+
 const runWindowList = async ({ binaryPath, args = DEFAULT_ARGS, logger = console }) => {
   if (!binaryPath) {
     throw new Error('list-on-screen-apps helper binary path required.');
@@ -181,14 +205,46 @@ const detectWindowSnapshot = async ({ activeWindowDetector: detector } = {}) => 
 
   const safeCandidates = Array.isArray(candidates) ? candidates : [];
   return {
+    visibleWindows: safeCandidates,
     visibleWindowNames: extractVisibleWindowNames(safeCandidates),
     activeWindow: pickActiveWindow(safeCandidates)
   };
 };
 
+const buildVisibleWindowCandidateKey = (window) => {
+  if (!window || typeof window !== 'object') {
+    return '';
+  }
+  return [
+    normalizeAppString(window.bundleId, ''),
+    normalizeAppString(window.name, ''),
+    normalizeAppString(window.title, ''),
+    Number.isFinite(window.pid) ? String(window.pid) : '',
+    window.active === true ? 'active' : 'inactive'
+  ].join('|');
+};
+
+const unionVisibleWindows = (left = [], right = []) => {
+  const seen = new Set();
+  const merged = [];
+  const values = [...(Array.isArray(left) ? left : []), ...(Array.isArray(right) ? right : [])];
+
+  for (const value of values) {
+    const key = buildVisibleWindowCandidateKey(value);
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    merged.push(value);
+  }
+
+  return merged;
+};
+
 const resolveCaptureAppContext = ({ beforeSnapshot, afterSnapshot, logger } = {}) => {
   const beforeWindow = beforeSnapshot?.activeWindow || null;
   const afterWindow = afterSnapshot?.activeWindow || null;
+  const visibleWindows = unionVisibleWindows(beforeSnapshot?.visibleWindows, afterSnapshot?.visibleWindows);
   const beforeVisibleWindowNames = beforeSnapshot?.visibleWindowNames;
   const afterVisibleWindowNames = afterSnapshot?.visibleWindowNames;
   const unchanged = isSameActiveWindow(beforeWindow, afterWindow);
@@ -228,6 +284,7 @@ const resolveCaptureAppContext = ({ beforeSnapshot, afterSnapshot, logger } = {}
     appBundleId,
     appTitle,
     appLabelSource,
+    visibleWindows,
     visibleWindowNames: unionStringLists(beforeVisibleWindowNames, afterVisibleWindowNames)
   };
 };
@@ -247,6 +304,15 @@ const createActiveWindowDetector = ({
   };
 
   const detectActiveWindow = async () => {
+    const overrideCandidates = readVisibleWindowsOverride({ logger });
+    if (overrideCandidates !== null) {
+      const candidate = pickActiveWindow(overrideCandidates);
+      if (!candidate) {
+        throw new Error('No active window detected from helper output.');
+      }
+      return candidate;
+    }
+
     const binaryPath = await resolveBinaryPathOnce();
     if (!binaryPath) {
       throw new Error(
@@ -264,6 +330,11 @@ const createActiveWindowDetector = ({
   };
 
   const detectWindowCandidates = async () => {
+    const overrideCandidates = readVisibleWindowsOverride({ logger });
+    if (overrideCandidates !== null) {
+      return overrideCandidates;
+    }
+
     const binaryPath = await resolveBinaryPathOnce();
     if (!binaryPath) {
       throw new Error(
@@ -298,5 +369,7 @@ module.exports = {
   runWindowList,
   isSameActiveWindow,
   detectWindowSnapshot,
-  resolveCaptureAppContext
+  resolveCaptureAppContext,
+  unionVisibleWindows,
+  readVisibleWindowsOverride
 };

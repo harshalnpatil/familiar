@@ -1,5 +1,4 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const fs = require('node:fs');
 const microcopy = ipcRenderer.sendSync('microcopy:get-sync');
 if (microcopy && typeof microcopy === 'object') {
   contextBridge.exposeInMainWorld('FamiliarMicrocopySource', {
@@ -253,12 +252,6 @@ async function handleCapture(_event, payload) {
     return;
   }
 
-  const filePath = payload?.filePath;
-  if (!filePath) {
-    sendStatus(requestId, 'error', { message: 'Missing capture output path.' });
-    return;
-  }
-
   const thumbnailBytes = payload?.thumbnailPng;
   const thumbnailDataUrl = payload?.thumbnailDataUrl;
   if (
@@ -301,8 +294,11 @@ async function handleCapture(_event, payload) {
     currentCapture.ctx.drawImage(image, 0, 0, currentCapture.canvas.width, currentCapture.canvas.height);
 
     const buffer = await canvasToBuffer(currentCapture.canvas, currentCapture.format);
-    await fs.promises.writeFile(filePath, buffer);
-    sendStatus(requestId, 'captured', { filePath });
+    sendStatus(requestId, 'captured', {
+      imageBuffer: buffer,
+      byteLength: buffer.length,
+      format: currentCapture.format
+    });
   } catch (error) {
     sendStatus(requestId, 'error', { message: error.message || 'Failed to capture still.' });
   } finally {

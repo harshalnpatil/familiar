@@ -42,6 +42,7 @@ export function HeartbeatsSection({
 }) {
   const heartbeatsCopy = mc?.dashboard?.heartbeats || {}
   const heartbeatMessages = heartbeatsCopy.messages || {}
+  const settingsErrors = mc?.dashboard?.settings?.errors || {}
   const timezoneOptions = useMemo(() => {
     const source = typeof Intl.supportedValuesOf === 'function'
       ? Intl.supportedValuesOf('timeZone')
@@ -109,8 +110,7 @@ export function HeartbeatsSection({
 
   const save = async () => {
     if (typeof saveHeartbeat !== 'function') {
-      setFormError(toDisplayText(mc?.dashboard?.heartbeats?.errors?.bridgeUnavailableRestart)
-        || 'Unable to save heartbeat.')
+      setFormError(toDisplayText(settingsErrors.bridgeUnavailableRestart))
       return
     }
     if (!draft.topic.trim()) {
@@ -144,7 +144,7 @@ export function HeartbeatsSection({
     setIsFormSubmitting(false)
 
     if (!result || result.ok !== true) {
-      setFormError(result?.message || 'Failed to save heartbeat.')
+      setFormError(result?.message || heartbeatMessages.failedToSave)
       return
     }
 

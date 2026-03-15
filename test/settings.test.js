@@ -251,6 +251,29 @@ test('saveSettings persists alwaysRecordWhenActive', () => {
   assert.equal(loaded.alwaysRecordWhenActive, true)
 })
 
+test('saveSettings persists normalized capturePrivacy.blacklistedApps', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
+  const settingsDir = path.join(tempRoot, 'settings')
+
+  saveSettings({
+    capturePrivacy: {
+      blacklistedApps: [
+        { bundleId: 'com.apple.MobileSMS', name: 'Messages' },
+        { bundleId: 'com.apple.MobileSMS', name: 'Messages duplicate' },
+        { name: ' Slack ' }
+      ]
+    }
+  }, { settingsDir })
+
+  const loaded = loadSettings({ settingsDir })
+  assert.deepEqual(loaded.capturePrivacy, {
+    blacklistedApps: [
+      { bundleId: 'com.apple.MobileSMS', name: 'Messages' },
+      { bundleId: null, name: 'Slack' }
+    ]
+  })
+})
+
 test('saveSettings preserves alwaysRecordWhenActive when updating other settings', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-'))
   const settingsDir = path.join(tempRoot, 'settings')

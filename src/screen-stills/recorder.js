@@ -2,15 +2,19 @@ const { BrowserWindow, desktopCapturer, ipcMain, screen, app } = require('electr
 const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const { inspect } = require('node:util');
 
+const { loadSettings } = require('../settings');
 const { isScreenRecordingPermissionGranted } = require('../screen-capture/permissions');
 const { createLowPowerModeMonitor } = require('../screen-capture/low-power-mode');
 const { createSessionStore } = require('./session-store');
 const { createStillsQueue } = require('./stills-queue');
+const { normalizeCapturePrivacySettings, shouldSkipCaptureForBlacklistedApps } = require('./capture-privacy');
 const {
   createActiveWindowDetector,
   detectWindowSnapshot,
-  resolveCaptureAppContext
+  resolveCaptureAppContext,
+  unionVisibleWindows
 } = require('./on-screen-apps-detector');
 
 const CAPTURE_CONFIG = Object.freeze({
@@ -41,8 +45,8 @@ function possiblyCorruptThumbnailPayload(thumbnailPayload = {}) {
   };
 }
 
-function createFakeCaptureFile(filePath) {
-  fs.writeFileSync(filePath, Buffer.from('familiar-e2e-screen-capture-placeholder', 'utf-8'));
+function createFakeCaptureBuffer() {
+  return Buffer.from('familiar-e2e-screen-capture-placeholder', 'utf-8');
 }
 
 function ensureEven(value) {
@@ -121,6 +125,7 @@ function createRecorder(options = {}) {
   const usesFixedInterval = Number.isFinite(options.intervalSeconds) && options.intervalSeconds > 0;
   const lowPowerModeAdaptiveIntervalEnabled = !usesFixedInterval && !hasE2EIntervalOverride;
   const lowPowerModeMonitor = options.lowPowerModeMonitor || createLowPowerModeMonitor({ logger });
+  const loadSettingsImpl = options.loadSettingsImpl || loadSettings;
 
   let captureWindow = null;
   let windowReadyPromise = null;
@@ -135,6 +140,49 @@ function createRecorder(options = {}) {
   let queueStore = null;
   let captureLoopIntervalMs = null;
   const activeWindowDetector = createActiveWindowDetectorImpl({ logger });
+
+  function normalizeCapturedImageBuffer(value) {
+    if (Buffer.isBuffer(value)) {
+      return value;
+    }
+    if (value instanceof ArrayBuffer) {
+      return Buffer.from(value);
+    }
+    if (ArrayBuffer.isView(value)) {
+      return Buffer.from(value.buffer, value.byteOffset, value.byteLength);
+    }
+    if (Array.isArray(value)) {
+      return Buffer.from(value);
+    }
+    if (value && value.type === 'Buffer' && Array.isArray(value.data)) {
+      return Buffer.from(value.data);
+    }
+    return null;
+  }
+
+  function getCapturePrivacySettings() {
+    const settings = loadSettingsImpl() || {};
+    return normalizeCapturePrivacySettings(settings.capturePrivacy);
+  }
+
+  function logBlacklistedAppSkip({ phase, matches, sessionId } = {}) {
+    const payload = {
+      phase,
+      sessionId: sessionId || null,
+      matches: Array.isArray(matches)
+        ? matches.map((entry) => ({
+            blacklistedApp: entry.blacklistedApp || null,
+            visibleWindow: entry.visibleWindow || null
+          }))
+        : []
+    };
+
+    logger.log(`Skipped still capture due to blacklisted visible app ${inspect(payload, {
+      depth: null,
+      compact: false,
+      breakLength: Infinity
+    })}`);
+  }
 
   function isCaptureAlreadyInProgressError(error) {
     const message = error?.message || '';
@@ -678,16 +726,50 @@ function createRecorder(options = {}) {
     const filePath = path.join(sessionStore.sessionDir, nextCapture.fileName);
 
     try {
+      const capturePrivacy = getCapturePrivacySettings();
+      const blacklistedApps = capturePrivacy.blacklistedApps;
       let captureAppContext = {
         appName: null,
         appBundleId: null,
         appTitle: null,
         appLabelSource: null,
+        visibleWindows: [],
         visibleWindowNames: []
       };
+      let beforeSnapshot = null;
+      let afterSnapshot = null;
+      const shouldDetectVisibleWindows = !IS_E2E_FAKE_CAPTURE || blacklistedApps.length > 0;
+
+      if (shouldDetectVisibleWindows) {
+        try {
+          beforeSnapshot = await detectWindowSnapshot({ activeWindowDetector });
+        } catch (error) {
+          logger.warn('Skipping still capture because visible window detection failed before capture', {
+            error: error?.message || String(error),
+            sessionId: sessionStore?.sessionId || null
+          });
+          return;
+        }
+      }
+
+      if (blacklistedApps.length > 0 && beforeSnapshot) {
+        const preCaptureDecision = shouldSkipCaptureForBlacklistedApps({
+          visibleWindows: beforeSnapshot.visibleWindows,
+          blacklistedApps
+        });
+        if (preCaptureDecision.skip) {
+          logBlacklistedAppSkip({
+            phase: 'pre-capture',
+            matches: preCaptureDecision.matches,
+            sessionId: sessionStore?.sessionId || null
+          });
+          return;
+        }
+      }
+
+      let capturedImageBuffer = null;
 
       if (!IS_E2E_FAKE_CAPTURE) {
-        const beforeSnapshot = await detectWindowSnapshot({ activeWindowDetector });
         const requestId = randomUUID();
         const activeSourceDetails = await ensureCaptureSource('capture-tick');
         const window = await ensureWindowReady();
@@ -701,21 +783,73 @@ function createRecorder(options = {}) {
           thumbnailPng: activeSourceDetails.thumbnailPng,
           format: CAPTURE_CONFIG.format
         });
-        await waitForStatus({
+        const captureStatus = await waitForStatus({
           requestId,
           timeoutMs: STOP_TIMEOUT_MS,
           expectedStatuses: ['captured']
         });
-        const afterSnapshot = await detectWindowSnapshot({ activeWindowDetector });
-        captureAppContext = resolveCaptureAppContext({
-          logger,
-          beforeSnapshot,
-          afterSnapshot
-        });
+        capturedImageBuffer = normalizeCapturedImageBuffer(captureStatus?.imageBuffer);
+        if (!capturedImageBuffer) {
+          throw new Error('Recording capture response missing encoded image buffer.');
+        }
+        if (shouldDetectVisibleWindows) {
+          try {
+            afterSnapshot = await detectWindowSnapshot({ activeWindowDetector });
+          } catch (error) {
+            logger.warn('Skipping still capture because visible window detection failed after capture', {
+              error: error?.message || String(error),
+              sessionId: sessionStore?.sessionId || null
+            });
+            return;
+          }
+        }
+        if (beforeSnapshot && afterSnapshot) {
+          captureAppContext = resolveCaptureAppContext({
+            logger,
+            beforeSnapshot,
+            afterSnapshot
+          });
+        }
         sourceDetails = activeSourceDetails || sourceDetails;
       } else {
-        createFakeCaptureFile(filePath);
+        capturedImageBuffer = createFakeCaptureBuffer();
+        if (shouldDetectVisibleWindows) {
+          try {
+            afterSnapshot = await detectWindowSnapshot({ activeWindowDetector });
+          } catch (error) {
+            logger.warn('Skipping fake still capture because visible window detection failed after capture', {
+              error: error?.message || String(error),
+              sessionId: sessionStore?.sessionId || null
+            });
+            return;
+          }
+        }
+        if (beforeSnapshot && afterSnapshot) {
+          captureAppContext = resolveCaptureAppContext({
+            logger,
+            beforeSnapshot,
+            afterSnapshot
+          });
+        }
       }
+
+      if (blacklistedApps.length > 0) {
+        const postCaptureDecision = shouldSkipCaptureForBlacklistedApps({
+          visibleWindows: unionVisibleWindows(beforeSnapshot?.visibleWindows, afterSnapshot?.visibleWindows),
+          blacklistedApps
+        });
+        if (postCaptureDecision.skip) {
+          logBlacklistedAppSkip({
+            phase: 'post-capture',
+            matches: postCaptureDecision.matches,
+            sessionId: sessionStore?.sessionId || null
+          });
+          return;
+        }
+      }
+
+      await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.promises.writeFile(filePath, capturedImageBuffer);
       if (sessionStore && queueStore) {
         try {
           queueStore.enqueueCapture({

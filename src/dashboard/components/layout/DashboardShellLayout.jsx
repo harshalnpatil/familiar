@@ -32,21 +32,14 @@ export function DashboardShellLayout({
   updatesState
 }) {
   const isWizardSection = activeSection === 'wizard'
-  const appLabel = toDisplayText(appName) || 'Familiar'
+  const appLabel = toDisplayText(appName)
   const updatesLabel = toDisplayText(updateMessage)
   const updatesErrorText = toDisplayText(updateError)
   const updatesPercent = Number(updatesState?.percent)
   const updatesProgressLabel = toDisplayText(updatesState?.label)
   const showUpdatesProgress = updatesState?.visible === true
   const showUpdatesProgressLabel = showUpdatesProgress && updatesProgressLabel.length > 0
-  const sectionTitle = {
-    wizard: 'Setup Wizard',
-    storage: 'Storage',
-    heartbeats: 'Heartbeats',
-    recording: 'Capturing',
-    'install-skill': 'Connect Agent',
-    installSkill: 'Connect Agent'
-  }[activeSection] || 'Storage'
+  const sectionTitle = navigation.find((entry) => entry.id === activeSection)?.label || ''
 
   const renderSectionIcon = (id) => {
     if (id === 'wizard') {
@@ -161,7 +154,7 @@ export function DashboardShellLayout({
             disabled={Boolean(isCheckingForUpdates)}
             className="w-full text-xs font-semibold"
           >
-            {updatesCheckForUpdatesLabel || 'Check for updates'}
+            {updatesCheckForUpdatesLabel}
           </Button>
           <span
             id="updates-sidebar-status"

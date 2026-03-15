@@ -59,6 +59,16 @@ const microcopy = {
       recordingCheckPermissions: 'Check Permissions',
       recordingEnableFamiliarInScreenRecording: 'Enable Familiar In Screen Recording',
       recordingAdvancedTitle: 'Advanced',
+      recordingBlacklistTitle: 'Apps Blacklist',
+      recordingBlacklistDescription:
+        'Familiar will not capture your screen if one of the selected apps appears on screen',
+      recordingInstalledAppsDescription: 'Search your installed apps.',
+      recordingInstalledAppsRefreshing: 'Refreshing...',
+      recordingInstalledAppsSearchPlaceholder: 'Search installed apps',
+      recordingInstalledAppsEmpty: 'No installed apps were found.',
+      recordingInstalledAppsNoSearchResults: 'No installed apps match this search.',
+      recordingBlacklistedAppsTitle: 'Selected Apps',
+      recordingBlacklistedAppRemove: 'Remove',
       recordingScreenRecordingSettingsNote:
         'Enable access to capture while active in Screen Recording settings.',
       recordingAfterEnablingRestartFamiliar: 'After enabling capturing, restart Familiar',
@@ -223,10 +233,13 @@ const microcopy = {
         failedToSaveSetting: 'Failed to save setting.',
         failedToLoadSettings: 'Failed to load settings.',
         bridgeUnavailableRestart: 'Settings bridge unavailable. Restart the app.',
+        captureBridgeUnavailableRestart: 'Capture bridge unavailable. Restart the app.',
         failedToOpenFolderPicker: 'Failed to open folder picker.',
         failedToMoveContextFolder: 'Failed to move context folder.',
         logCopyUnavailableRestart: 'Log copy unavailable. Restart the app.',
         failedToCopyLogFile: 'Failed to copy log file.',
+        failedToCheckScreenRecordingPermission: 'Failed to check screen recording permission.',
+        failedToUpdateCaptureState: 'Failed to update capture state.',
         storageCleanupUnavailableRestart: 'Storage cleanup unavailable. Restart the app.',
         failedToDeleteFiles: 'Failed to delete files.',
         failedToLoadStorageUsage: 'Failed to load storage usage.'
@@ -344,7 +357,8 @@ const microcopy = {
       stopLabel: 'Pause capture',
       onLabel: 'Capturing',
       offLabel: 'Not capturing',
-      disabledLabel: 'Capture disabled'
+      disabledLabel: 'Capture disabled',
+      installedAppsLoadFailed: 'Failed to load installed apps'
     },
     wizardSkill: {
       harnessNames: {

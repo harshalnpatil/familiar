@@ -50,21 +50,11 @@ export const buildDashboardShellMicrocopy = (microcopy = {}) => ({
       ...(microcopy.dashboard?.heartbeats || {}),
       messages: {
         ...(microcopy.dashboard?.heartbeats?.messages || {}),
-        statusSaving: microcopy.dashboard?.settings?.statusSaving || 'Saving…',
-        statusSaved: microcopy.dashboard?.settings?.statusSaved || 'Saved.',
-        failedToSave: 'Failed to save heartbeat.',
-        noTopic: 'Topic is required and must match letters, numbers, underscore, or hyphen.',
-        noPrompt: 'Prompt is required.',
-        noTime: 'Time is required.',
-        invalidTime: 'Time must be HH:mm.',
-        invalidTimezone: 'Please select a valid timezone.',
-        runnerNotConfigured: 'Only allowed for options picked in "Connect Agent".'
+        statusSaving: microcopy.dashboard?.settings?.statusSaving,
+        statusSaved: microcopy.dashboard?.settings?.statusSaved
       },
       errors: {
-        ...(microcopy.dashboard?.heartbeats?.errors || {}),
-        requiredContextFolder: 'Set a context folder before running or opening heartbeats.',
-        failedToOpenFolder: 'Failed to open heartbeats folder.',
-        failedToRunNow: 'Failed to run heartbeat.'
+        ...(microcopy.dashboard?.heartbeats?.errors || {})
       }
     },
     sections: {

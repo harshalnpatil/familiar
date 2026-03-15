@@ -106,7 +106,7 @@ export function toDisplayText(value) {
     return String(value)
   }
   if (value instanceof Error) {
-    return value.message || 'Error'
+    return typeof value.message === 'string' ? value.message : ''
   }
   if (typeof value === 'object' && typeof value.message === 'string') {
     return value.message

@@ -5,6 +5,36 @@ const { test, expect } = require('playwright/test')
 const { _electron: electron } = require('playwright')
 const { confirmMoveContextFolder } = require('./helpers')
 
+const getSettingsWindow = async (electronApp) => {
+  let requestedActivation = false
+
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    for (const window of electronApp.windows()) {
+      try {
+        const hasSettingsBridge = await window.evaluate(
+          () => typeof window.familiar?.getSettings === 'function'
+        )
+        if (hasSettingsBridge) {
+          return window
+        }
+      } catch {
+        // Ignore windows that are still loading or use a different preload bridge.
+      }
+    }
+
+    if (!requestedActivation) {
+      requestedActivation = true
+      await electronApp.evaluate(({ app }) => {
+        app.emit('activate')
+      })
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+
+  throw new Error('Timed out waiting for the settings window')
+}
+
 test('storage change button sets the context folder path', async () => {
   const appRoot = path.join(__dirname, '../..')
   const sourceContextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-context-source-'))
@@ -30,7 +60,7 @@ test('storage change button sets the context folder path', async () => {
       2
     )
   )
-  const launchArgs = ['.']
+  const launchArgs = ['.', '--open-settings']
   if (process.platform === 'linux') {
     launchArgs.push('--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage')
   }
@@ -88,7 +118,7 @@ test('capturing tab keeps toggle visible before checking permissions', async () 
     )
   )
 
-  const launchArgs = ['.']
+  const launchArgs = ['.', '--open-settings']
   if (process.platform === 'linux') {
     launchArgs.push('--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage')
   }
@@ -111,6 +141,66 @@ test('capturing tab keeps toggle visible before checking permissions', async () 
 
     await window.getByRole('tab', { name: 'Capturing' }).click()
     await expect(window.locator('#recording-recording-toggle-section')).toBeVisible()
+  } finally {
+    await electronApp.close()
+  }
+})
+
+test('capturing tab saves blacklisted installed apps into settings', async () => {
+  const appRoot = path.join(__dirname, '../..')
+  const contextPath = path.join(appRoot, 'test', 'fixtures', 'context')
+  const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-e2e-'))
+  const settingsPath = path.join(settingsDir, 'settings.json')
+  fs.writeFileSync(
+    settingsPath,
+    JSON.stringify(
+      {
+        wizardCompleted: true,
+        capturePrivacy: {
+          blacklistedApps: []
+        }
+      },
+      null,
+      2
+    )
+  )
+
+  const launchArgs = ['.', '--open-settings']
+  if (process.platform === 'linux') {
+    launchArgs.push('--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage')
+  }
+
+  const electronApp = await electron.launch({
+    args: launchArgs,
+    cwd: appRoot,
+    env: {
+      ...process.env,
+      FAMILIAR_E2E: '1',
+      FAMILIAR_E2E_CONTEXT_PATH: contextPath,
+      FAMILIAR_SETTINGS_DIR: settingsDir,
+      FAMILIAR_E2E_INSTALLED_APPS_JSON: JSON.stringify([
+        { name: 'Messages', bundleId: 'com.apple.MobileSMS', appPath: '/Applications/Messages.app' },
+        { name: 'Google Chrome', bundleId: 'com.google.Chrome', appPath: '/Applications/Google Chrome.app' }
+      ])
+    }
+  })
+
+  try {
+    const window = await electronApp.firstWindow()
+    await window.waitForLoadState('domcontentloaded')
+
+    await window.getByRole('tab', { name: 'Capturing' }).click()
+    const messagesOption = window.locator('label').filter({ hasText: 'Messages' }).first()
+    await expect(messagesOption).toBeVisible()
+    await messagesOption.click()
+    await expect(window.locator('#recording-capture-privacy-status')).toHaveText('Saved.')
+
+    const stored = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
+    expect(stored.capturePrivacy).toEqual({
+      blacklistedApps: [
+        { bundleId: 'com.apple.MobileSMS', name: 'Messages' }
+      ]
+    })
   } finally {
     await electronApp.close()
   }
@@ -276,7 +366,7 @@ test('repeated non-capture settings saves keep screen-stills state stable', asyn
     )
   )
 
-  const launchArgs = ['.']
+  const launchArgs = ['.', '--open-settings']
   if (process.platform === 'linux') {
     launchArgs.push('--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage')
   }
@@ -296,7 +386,7 @@ test('repeated non-capture settings saves keep screen-stills state stable', asyn
   })
 
   try {
-    const window = await electronApp.firstWindow()
+    const window = await getSettingsWindow(electronApp)
     await window.waitForLoadState('domcontentloaded')
 
     await window.evaluate(() => {

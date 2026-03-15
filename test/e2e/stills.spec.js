@@ -25,7 +25,7 @@ const ensureSourceContext = (sourceContextPath) => {
   return resolvedSourceContextPath
 }
 
-const launchApp = async ({ contextPath, sourceContextPath, settingsDir, env = {} }) => {
+const launchApp = async ({ contextPath, sourceContextPath, settingsDir, env = {}, initialSettings = {} }) => {
   const appRoot = path.join(__dirname, '../..')
   const resolvedSourceContextPath = ensureSourceContext(sourceContextPath)
   fs.writeFileSync(
@@ -33,7 +33,8 @@ const launchApp = async ({ contextPath, sourceContextPath, settingsDir, env = {}
     JSON.stringify(
       {
         wizardCompleted: true,
-        contextFolderPath: resolvedSourceContextPath
+        contextFolderPath: resolvedSourceContextPath,
+        ...initialSettings
       },
       null,
       2
@@ -218,6 +219,42 @@ const setWindowBackdrop = async (window, options = {}) => {
     { backgroundColor, marker }
   )
 }
+
+test('capturing skips still files when a blacklisted app is visible', async () => {
+  const contextPath = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-context-stills-privacy-'))
+  const settingsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'familiar-settings-stills-privacy-'))
+  const electronApp = await launchApp({
+    contextPath,
+    settingsDir,
+    initialSettings: {
+      capturePrivacy: {
+        blacklistedApps: [{ bundleId: 'com.apple.MobileSMS', name: 'Messages' }]
+      }
+    },
+    env: {
+      FAMILIAR_E2E_SCREEN_RECORDING_PERMISSION: 'granted',
+      FAMILIAR_E2E_VISIBLE_WINDOWS_JSON: JSON.stringify([
+        { name: 'Messages', bundleId: 'com.apple.MobileSMS', active: true }
+      ])
+    }
+  })
+
+  try {
+    const window = await electronApp.firstWindow()
+    await window.waitForLoadState('domcontentloaded')
+    await ensureRecordingPrereqs(window)
+    await setContextFolder(window)
+    await enableRecordingToggle(window)
+    await startCapturingFromSettings(window)
+
+    const stillsRoot = getStillsRoot(contextPath)
+    const sessionDir = await waitForSessionDir(stillsRoot)
+    await window.waitForTimeout(600)
+    expect(listCaptureFiles(sessionDir)).toEqual([])
+  } finally {
+    await electronApp.close()
+  }
+})
 
 const readCaptureBuffer = (sessionDir, captureFileName) =>
   fs.readFileSync(path.join(sessionDir, captureFileName))

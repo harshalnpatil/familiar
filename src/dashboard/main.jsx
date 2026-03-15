@@ -16,7 +16,7 @@ function toDisplayText(value) {
     return String(value)
   }
   if (value instanceof Error) {
-    return value.message || 'Error'
+    return typeof value.message === 'string' ? value.message : ''
   }
   if (typeof value === 'object' && typeof value.message === 'string') {
     return value.message
@@ -25,18 +25,11 @@ function toDisplayText(value) {
 }
 
 function getAppName(microcopy) {
-  return (
-    toDisplayText(microcopy?.app?.name) ||
-    toDisplayText(microcopy?.dashboard?.html?.appName) ||
-    'Familiar'
-  )
+  return toDisplayText(microcopy?.app?.name)
 }
 
 function getInitializationErrorCopy(microcopy) {
-  return (
-    toDisplayText(microcopy?.dashboard?.errors?.reactInitializationFailed) ||
-    'Unable to initialize the React dashboard.'
-  )
+  return toDisplayText(microcopy?.dashboard?.errors?.reactInitializationFailed)
 }
 
 function setInlineFallback(message, microcopy = getDashboardMicrocopy()) {
@@ -78,12 +71,14 @@ try {
   console.error('Failed to initialize Familiar React dashboard', error)
   const message = error && typeof error.message === 'string'
     ? error.message
-    : 'unknown error'
+    : ''
   setInlineFallback(message, getDashboardMicrocopy())
 }
 
 window.addEventListener('error', (event) => {
-  const message = event?.error?.message || event?.message || 'unknown error'
+  const message = typeof event?.error?.message === 'string'
+    ? event.error.message
+    : toDisplayText(event?.message)
   console.error('Runtime error in React dashboard', event.error || message)
   setInlineFallback(message, getDashboardMicrocopy())
 })
@@ -91,7 +86,7 @@ window.addEventListener('error', (event) => {
 window.addEventListener('unhandledrejection', (event) => {
   const message = event?.reason && event.reason.message
     ? event.reason.message
-    : toDisplayText(event?.reason) || 'unhandled rejection'
+    : toDisplayText(event?.reason)
   console.error('Unhandled rejection in React dashboard', event.reason)
   setInlineFallback(message, getDashboardMicrocopy())
 })

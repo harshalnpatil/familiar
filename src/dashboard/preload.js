@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('familiar', {
   checkScreenRecordingPermission: () => ipcRenderer.invoke('settings:checkScreenRecordingPermission'),
   requestScreenRecordingPermission: () => ipcRenderer.invoke('settings:requestScreenRecordingPermission'),
   openScreenRecordingSettings: () => ipcRenderer.invoke('settings:openScreenRecordingSettings'),
+  listInstalledApps: () => ipcRenderer.invoke('settings:listInstalledApps'),
+  getInstalledAppIcon: (payload) => ipcRenderer.invoke('settings:getInstalledAppIcon', payload || {}),
   pickContextFolder: () => ipcRenderer.invoke('settings:pickContextFolder'),
   moveContextFolder: (payload) => ipcRenderer.invoke('settings:moveContextFolder', payload),
   saveSettings: (payload) => {
