@@ -28,7 +28,13 @@
     "test:unit:timed": "npm run rebuild:node && node scripts/run-unit-tests-with-timeout.js",
     "test:e2e": "npm run build:apple-vision-ocr && npm run build:active-window-detector && npm run build:rg-bundle && npm run react:build:dashboard && npm run rebuild:electron && playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:all": "npm run test && npm run test:e2e && npm run test:unit:timed"
+    "test:all": "npm run test && npm run test:e2e && npm run test:unit:timed",
+    "pre-dist:win": "npm run css:build && npm run react:build:dashboard",
+    "dist:win": "npm run clean && npm run css:build && electron-builder --win --x64 --arm64",
+    "pre-dist:win:x64": "npm run css:build && npm run react:build:dashboard",
+    "dist:win:x64": "npm run clean && npm run css:build && electron-builder --win --x64",
+    "pre-dist:win:arm64": "npm run css:build && npm run react:build:dashboard",
+    "dist:win:arm64": "npm run clean && npm run css:build && electron-builder --win --arm64"
   },
   "repository": "https://github.com/familiar-software/familiar",
   "keywords": [
@@ -45,7 +51,8 @@
         "provider": "github",
         "owner": "familiar-software",
         "repo": "familiar",
-        "releaseType": "release"
+        "releaseType": "release",
+        "channel": "latest"
       }
     ],
     "directories": {
@@ -100,6 +107,36 @@
           "path": "/Applications"
         }
       ]
+    },
+    "generateUpdatesFilesForAllChannels": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "publisherName": [
+        "Familiar Software"
+      ],
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
     }
   },
   "author": "Familiar",
