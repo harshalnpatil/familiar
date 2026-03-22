@@ -59,6 +59,12 @@ const { openFileInTextEdit } = require('./utils/open-in-textedit');
 const { createRetentionChangeTrigger } = require('./storage/retention-change-trigger');
 const { moveFamiliarFolder } = require('./context-folder/move');
 const { createMoveContextFolderHandler } = require('./context-folder/move-handler');
+const {
+    SENSITIVE_FEATURES,
+    getSensitiveFeatureCapabilities,
+    getSensitiveFeatureCapability,
+    isSensitiveFeatureSupported
+} = require('./platform/capabilities');
 
 const trayIconPath = path.join(__dirname, 'icon_white_owl.png');
 
@@ -69,7 +75,7 @@ let refreshTrayIcon = () => {};
 let resolveTrayIconStateForE2E = () => ({
     hasUnreadHeartbeats: false,
     iconPath: trayIconPath,
-    isTemplateImage: process.platform === 'darwin'
+    isTemplateImage: isSensitiveFeatureSupported(SENSITIVE_FEATURES.TRAY_TEMPLATE_IMAGE)
 });
 let settingsWindow = null;
 let isQuitting = false;
@@ -538,13 +544,23 @@ const handleMoveContextFolder = createMoveContextFolderHandler({
     logger: console
 });
 
-if (process.platform === 'linux' && (isE2E || isCI)) {
+if (
+    isSensitiveFeatureSupported(SENSITIVE_FEATURES.LINUX_CI_E2E_FLAGS, {
+        platform: process.platform
+    })
+    && (isE2E || isCI)
+) {
     console.log('Applying Linux CI/E2E Electron flags');
     app.disableHardwareAcceleration();
     app.commandLine.appendSwitch('no-sandbox');
     app.commandLine.appendSwitch('disable-gpu');
     app.commandLine.appendSwitch('disable-dev-shm-usage');
 }
+const resolveCapabilityRegistry = () =>
+    getSensitiveFeatureCapabilities({
+        platform: process.platform,
+        isE2E
+    });
 
 const getSettingsWindowHtmlPath = () => {
     const reactHtmlPath = path.join(__dirname, 'dashboard', 'index-react.html');
@@ -641,7 +657,8 @@ function createTray() {
                 hasUnreadHeartbeats,
                 isDarkMode: nativeTheme.shouldUseDarkColors === true
             }),
-            isTemplateImage: !hasUnreadHeartbeats && process.platform === 'darwin'
+            isTemplateImage: !hasUnreadHeartbeats
+              && isSensitiveFeatureSupported(SENSITIVE_FEATURES.TRAY_TEMPLATE_IMAGE)
         };
     };
     resolveTrayIconStateForE2E = getTrayIconState;
@@ -712,6 +729,7 @@ const registerMainProcessIpc = () => {
     registerIpcHandlers({
         onSettingsSaved: handleMainSettingsSaved,
         onMoveContextFolder: handleMoveContextFolder,
+        resolveCapabilities: resolveCapabilityRegistry,
         runHeartbeatNow: (payload) => heartbeatScheduler?.runHeartbeatNow?.(payload)
     });
 
@@ -919,15 +937,22 @@ if (isPrimaryInstance) {
     registerMainProcessIpc();
 
     app.whenReady().then(async () => {
-        if (process.platform !== 'darwin' && !isE2E) {
-            console.error('Familiar desktop app is macOS-only right now.');
+        const runtimeCapability = getSensitiveFeatureCapability(SENSITIVE_FEATURES.APP_RUNTIME, {
+            platform: process.platform,
+            isE2E
+        });
+        if (!runtimeCapability.supported) {
+            console.error(runtimeCapability.reason);
             app.quit();
             return;
         }
 
         await ensureFamiliarSkillAlignment();
 
-        const shouldInitializeRecording = process.platform === 'darwin' || isE2E;
+        const shouldInitializeRecording = isSensitiveFeatureSupported(SENSITIVE_FEATURES.SCREEN_CAPTURE, {
+            platform: process.platform,
+            isE2E
+        });
         if (shouldInitializeRecording) {
             presenceMonitor = createPresenceMonitor({ logger: console });
             if (pauseDurationOverrideMs) {
@@ -1015,7 +1040,9 @@ if (isPrimaryInstance) {
 
         let wasOpenedAtLogin = false;
 
-        if (process.platform === 'darwin') {
+        if (isSensitiveFeatureSupported(SENSITIVE_FEATURES.TRAY, {
+            platform: process.platform
+        })) {
             try {
                 const loginItemSettings = app.getLoginItemSettings();
                 wasOpenedAtLogin = loginItemSettings?.wasOpenedAtLogin === true;
@@ -1105,7 +1132,9 @@ app.on('render-process-gone', (_event, details) => {
 });
 
 app.on('window-all-closed', (event) => {
-    if (process.platform === 'darwin') {
+    if (isSensitiveFeatureSupported(SENSITIVE_FEATURES.WINDOW_CLOSE_TO_TRAY, {
+        platform: process.platform
+    })) {
         if (isQuitting || app.isQuittingForUpdate) {
             return;
         }

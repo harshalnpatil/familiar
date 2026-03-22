@@ -1,4 +1,8 @@
 const path = require('node:path')
+const {
+  SENSITIVE_FEATURES,
+  isSensitiveFeatureSupported
+} = require('../platform/capabilities')
 
 const getTrayIconPathForMenuBar = ({
   defaultIconPath,
@@ -59,7 +63,9 @@ const createTrayIconFactory = ({
     const finalIcon = resizedIcon
 
     if (typeof finalIcon.setTemplateImage === 'function') {
-      finalIcon.setTemplateImage(!hasUnreadHeartbeats && process.platform === 'darwin')
+      finalIcon.setTemplateImage(
+        !hasUnreadHeartbeats && isSensitiveFeatureSupported(SENSITIVE_FEATURES.TRAY_TEMPLATE_IMAGE)
+      )
     }
 
     cache.set(cacheKey, finalIcon)
