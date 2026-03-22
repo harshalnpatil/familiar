@@ -1,4 +1,8 @@
 const { shell, systemPreferences } = require('electron');
+const {
+  SENSITIVE_FEATURES,
+  isSensitiveFeatureSupported
+} = require('../platform/capabilities');
 
 const SCREEN_RECORDING_SETTINGS_URL = 'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture';
 
@@ -21,7 +25,7 @@ function getE2EScreenRecordingPermissionStatus() {
     }
   }
 
-  if (process.platform !== 'darwin') {
+  if (!isSensitiveFeatureSupported(SENSITIVE_FEATURES.SCREEN_RECORDING_PERMISSION)) {
     return 'unavailable';
   }
 
@@ -34,7 +38,7 @@ function getScreenRecordingPermissionStatus() {
     return e2ePermissionStatus;
   }
 
-  if (process.platform !== 'darwin') {
+  if (!isSensitiveFeatureSupported(SENSITIVE_FEATURES.SCREEN_RECORDING_PERMISSION)) {
     return 'unavailable';
   }
   try {
@@ -59,7 +63,7 @@ async function requestScreenRecordingPermission() {
     };
   }
 
-  if (process.platform !== 'darwin') {
+  if (!isSensitiveFeatureSupported(SENSITIVE_FEATURES.SCREEN_RECORDING_PERMISSION)) {
     return {
       ok: false,
       permissionStatus: 'unavailable',
@@ -97,7 +101,7 @@ async function requestScreenRecordingPermission() {
 }
 
 async function openScreenRecordingSettings() {
-  if (process.platform !== 'darwin') {
+  if (!isSensitiveFeatureSupported(SENSITIVE_FEATURES.SCREEN_RECORDING_SETTINGS)) {
     return {
       ok: false,
       message: 'Screen Recording settings are only available on macOS.'
